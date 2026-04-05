@@ -1,0 +1,26 @@
+[
+  {
+    "id": 201,
+    "tipo": "Seguro médico",
+    "archivo": "seguro_juanperez.pdf",
+    "cirugiaId": 101
+  },
+  {
+    "id": 202,
+    "tipo": "Nota médica",
+    "archivo": "nota_preoperatoria.pdf",
+    "cirugiaId": 101
+  },
+  {
+    "id": 203,
+    "tipo": "Consentimiento informado",
+    "archivo": "consentimiento_apendice.pdf",
+    "cirugiaId": 102
+  },
+  {
+    "id": 204,
+    "tipo": "Seguro médico",
+    "archivo": "seguro_laurasanchez.pdf",
+    "cirugiaId": 104
+  }
+]

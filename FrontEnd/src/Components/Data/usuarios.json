@@ -1,0 +1,55 @@
+[
+  {
+    "id": 1,
+    "nombre": "Juan Pérez",
+    "rol": "paciente",
+    "email": "juan.perez@example.com",
+    "telefono": "+50688887777",
+    "cirugias": [101, 102]
+  },
+  {
+    "id": 2,
+    "nombre": "Laura Sánchez",
+    "rol": "paciente",
+    "email": "laura.sanchez@example.com",
+    "telefono": "+50688886666",
+    "cirugias": [103, 104]
+  },
+  {
+    "id": 3,
+    "nombre": "Dra. María López",
+    "rol": "cirujano",
+    "especialidad": "Cardiología",
+    "email": "maria.lopez@example.com"
+  },
+  {
+    "id": 4,
+    "nombre": "Dr. Carlos Ramírez",
+    "rol": "anestesiologo",
+    "email": "carlos.ramirez@example.com"
+  },
+  {
+    "id": 5,
+    "nombre": "Ana Torres",
+    "rol": "asistente",
+    "email": "ana.torres@example.com"
+  },
+  {
+    "id": 6,
+    "nombre": "Luis Gómez",
+    "rol": "asistente",
+    "email": "luis.gomez@example.com"
+  },
+  {
+    "id": 7,
+    "nombre": "Sofía Herrera",
+    "rol": "asistente",
+    "email": "sofia.herrera@example.com"
+  },
+  {
+    "id": 8,
+    "nombre": "Administrador General",
+    "rol": "administrador",
+    "email": "admin@example.com"
+  }
+]
