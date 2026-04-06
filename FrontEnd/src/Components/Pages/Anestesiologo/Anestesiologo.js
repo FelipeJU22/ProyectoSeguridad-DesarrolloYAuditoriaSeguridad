@@ -1,62 +1,172 @@
-import React, { useState, useEffect, useRef } from 'react';
-import DataTable from 'react-data-table-component';
-import { Calendar } from '@fullcalendar/core';
+import React, { useState, useEffect } from 'react';
+import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import { Tab, Tabs } from 'react-bootstrap';
 import cirugiasData from '../../Data/cirugias.json';
 import usuariosData from '../../Data/usuarios.json';
+import './Anestesiologo.css';
 
 function Anestesiologo() {
   const [cirugias, setCirugias] = useState([]);
-  const [activeTab, setActiveTab] = useState('citas');
-  const calendarRef = useRef(null);
-  const anestesiologoId = 4; // ID del anestesiólogo actual
+  const [tabActiva, setTabActiva] = useState('citas');
+
+  const usuarioActual    = JSON.parse(localStorage.getItem('usuario') || '{}');
+  const anestesiologoId  = usuarioActual.id || 4;
+  const iniciales        = usuarioActual.nombre
+    ? usuarioActual.nombre.split(' ').map(n => n[0]).join('').slice(1, 3).toUpperCase()
+    : 'AN';
 
   useEffect(() => {
     setCirugias(cirugiasData.filter(c => c.anestesiologoId === anestesiologoId));
-  }, []);
+  }, [anestesiologoId]);
 
-  useEffect(() => {
-    if (activeTab === 'calendario' && calendarRef.current) {
-      const calendar = new Calendar(calendarRef.current, {
-        plugins: [dayGridPlugin],
-        initialView: 'dayGridMonth',
-        events: cirugias.map(c => ({ title: c.tipo, date: c.fecha })),
-      });
-      calendar.render();
-      return () => calendar.destroy();
-    }
-  }, [activeTab, cirugias]);
-
-  const getUsuarioNombre = id => {
-    const usuario = usuariosData.find(u => u.id === id);
-    return usuario ? usuario.nombre : 'Desconocido';
+  const getUsuarioNombre = (id) => {
+    const u = usuariosData.find(u => u.id === id);
+    return u ? u.nombre : `ID ${id}`;
   };
 
-  const columns = [
-    { name: 'ID', selector: row => row.id, sortable: true },
-    { name: 'Paciente', selector: row => getUsuarioNombre(row.pacienteId), sortable: true },
-    { name: 'Tipo', selector: row => row.tipo, sortable: true },
-    { name: 'Fecha', selector: row => row.fecha, sortable: true },
-    { name: 'Estado', selector: row => row.estado, sortable: true },
-    { name: 'Cirujano', selector: row => getUsuarioNombre(row.cirujanoId), sortable: true }
-  ];
+  const getBadgeClass = (estado) => {
+    const map = {
+      programada: 'badge-programada',
+      completada: 'badge-completada',
+      cancelada:  'badge-cancelada',
+      pendiente:  'badge-pendiente',
+    };
+    return map[estado?.toLowerCase()] || 'badge-pendiente';
+  };
+
+  // ─── EVENTOS CALENDARIO ───────────────────────────────────────────────────
+
+  const eventos = cirugias.map(c => ({
+    title: `${c.tipo} — ${getUsuarioNombre(c.pacienteId)}`,
+    date:  c.fecha,
+    backgroundColor: c.estado === 'completada' ? '#16a34a'
+      : c.estado === 'cancelada'  ? '#dc2626'
+      : c.estado === 'pendiente'  ? '#94a3b8'
+      : '#4f46e5',
+    borderColor: 'transparent',
+  }));
+
+  // ─── RENDER ───────────────────────────────────────────────────────────────
 
   return (
-    <div>
-      <h2>Anestesiólogo</h2>
-      <Tabs activeKey={activeTab} onSelect={k => setActiveTab(k)} id="anestesiologo-tabs">
-        <Tab eventKey="citas" title="Citas">
-          <DataTable
-            columns={columns}
-            data={cirugias}
-            pagination
-          />
-        </Tab>
-        <Tab eventKey="calendario" title="Calendario">
-          <div ref={calendarRef} style={{ minHeight: '500px', marginTop: '16px' }} />
-        </Tab>
-      </Tabs>
+    <div className="anestesiologo-page">
+
+      {/* HEADER */}
+      <header className="anestesiologo-header">
+        <span className="brand">HospiTEC</span>
+        <div className="user-info">
+          <div className="user-avatar">{iniciales}</div>
+          <span className="user-name">{usuarioActual.nombre || 'Anestesiólogo'}</span>
+          <span className="rol-badge">Anestesiólogo</span>
+          <button
+            className="btn-logout"
+            onClick={() => {
+              console.log('[BACKEND → POST /auth/logout]', {
+                anestesiologoId,
+                timestamp: new Date().toISOString(),
+              });
+              localStorage.removeItem('usuario');
+              window.location.href = '/';
+            }}
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      </header>
+
+      {/* CONTENT */}
+      <main className="anestesiologo-content">
+        <h1 className="page-title">Panel del Anestesiólogo</h1>
+        <p className="page-subtitle">Consultá las cirugías en las que estás asignado.</p>
+
+        {/* TABS */}
+        <div className="tab-bar">
+          <button
+            className={`tab-btn ${tabActiva === 'citas' ? 'active' : ''}`}
+            onClick={() => setTabActiva('citas')}
+          >
+            Mis Cirugías
+          </button>
+          <button
+            className={`tab-btn ${tabActiva === 'calendario' ? 'active' : ''}`}
+            onClick={() => setTabActiva('calendario')}
+          >
+            Calendario
+          </button>
+        </div>
+
+        {/* TAB: CIRUGÍAS */}
+        {tabActiva === 'citas' && (
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Cirugías asignadas</span>
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                {cirugias.length} registro(s)
+              </span>
+            </div>
+
+            {cirugias.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">💉</div>
+                <p>No tenés cirugías asignadas.</p>
+              </div>
+            ) : (
+              <div className="tabla-wrapper">
+                <table className="tabla-cirugias">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Paciente</th>
+                      <th>Tipo</th>
+                      <th>Fecha</th>
+                      <th>Estado</th>
+                      <th>Cirujano</th>
+                      <th>Asistentes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cirugias.map(c => (
+                      <tr key={c.id}>
+                        <td>{c.id}</td>
+                        <td>{getUsuarioNombre(c.pacienteId)}</td>
+                        <td>{c.tipo}</td>
+                        <td>{c.fecha}</td>
+                        <td>
+                          <span className={`badge ${getBadgeClass(c.estado)}`}>
+                            {c.estado}
+                          </span>
+                        </td>
+                        <td>{getUsuarioNombre(c.cirujanoId)}</td>
+                        <td>
+                          {c.asistentes?.map(a => getUsuarioNombre(a.asistenteId)).join(', ') || '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB: CALENDARIO */}
+        {tabActiva === 'calendario' && (
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Calendario de cirugías</span>
+            </div>
+            <div className="calendar-container">
+              <FullCalendar
+                plugins={[dayGridPlugin]}
+                initialView="dayGridMonth"
+                events={eventos}
+                locale="es"
+                height="auto"
+              />
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

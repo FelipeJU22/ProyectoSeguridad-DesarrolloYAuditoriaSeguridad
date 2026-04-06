@@ -2,54 +2,62 @@
   {
     "id": 1,
     "nombre": "Juan Pérez",
-    "rol": "paciente",
-    "email": "juan.perez@example.com",
+    "rol": 1,
+    "email": "paciente1@gmail.com",
     "telefono": "+50688887777",
+    "password": "jorge123",
     "cirugias": [101, 102]
   },
   {
     "id": 2,
     "nombre": "Laura Sánchez",
-    "rol": "paciente",
-    "email": "laura.sanchez@example.com",
+    "rol": 1,
+    "email": "paciente2@gmail.com",
     "telefono": "+50688886666",
+    "password": "jorge123",
     "cirugias": [103, 104]
   },
   {
     "id": 3,
     "nombre": "Dra. María López",
-    "rol": "cirujano",
+    "rol": 2,
     "especialidad": "Cardiología",
-    "email": "maria.lopez@example.com"
+    "email": "doc1@gmail.com",
+    "password": "jorge123"
   },
   {
     "id": 4,
     "nombre": "Dr. Carlos Ramírez",
-    "rol": "anestesiologo",
-    "email": "carlos.ramirez@example.com"
+    "rol": 4,
+    "email": "anes1@gmail.com",
+    "password": "jorge123"
   },
   {
     "id": 5,
     "nombre": "Ana Torres",
-    "rol": "asistente",
-    "email": "ana.torres@example.com"
+    "rol": 3,
+    "email": "asis1@gmail.com",
+    "password": "jorge123"
   },
   {
     "id": 6,
     "nombre": "Luis Gómez",
-    "rol": "asistente",
-    "email": "luis.gomez@example.com"
+    "rol": 3,
+    "email": "asis2@gmail.com",
+    "password": "jorge123"
   },
   {
     "id": 7,
     "nombre": "Sofía Herrera",
-    "rol": "asistente",
-    "email": "sofia.herrera@example.com"
+    "rol": 3,
+    "email": "asis3@gmail.com",
+    "password": "jorge123"
   },
   {
     "id": 8,
     "nombre": "Administrador General",
-    "rol": "administrador",
-    "email": "admin@example.com"
+    "rol": 0,
+    "email": "admin@gmail.com",
+    "password": "jorge123"
   }
 ]
