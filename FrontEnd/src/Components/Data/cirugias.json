@@ -1,0 +1,56 @@
+[
+  {
+    "id": 101,
+    "pacienteId": 1,
+    "tipo": "Bypass coronario",
+    "fecha": "2026-04-10",
+    "estado": "programada",
+    "cirujanoId": 3,
+    "anestesiologoId": 4,
+    "asistentes": [
+      { "asistenteId": 5 },
+      { "asistenteId": 7 }
+    ],
+    "documentos": [201, 202]
+  },
+  {
+    "id": 102,
+    "pacienteId": 1,
+    "tipo": "Apendicectomía",
+    "fecha": "2026-05-02",
+    "estado": "pendiente",
+    "cirujanoId": 3,
+    "anestesiologoId": 4,
+    "asistentes": [
+      { "asistenteId": 6 }
+    ],
+    "documentos": [203]
+  },
+  {
+    "id": 103,
+    "pacienteId": 2,
+    "tipo": "Cirugía de rodilla",
+    "fecha": "2026-06-15",
+    "estado": "completada",
+    "cirujanoId": 3,
+    "anestesiologoId": 4,
+    "asistentes": [
+      { "asistenteId": 5 },
+      { "asistenteId": 6 }
+    ],
+    "documentos": []
+  },
+  {
+    "id": 104,
+    "pacienteId": 2,
+    "tipo": "Colecistectomía",
+    "fecha": "2026-07-20",
+    "estado": "programada",
+    "cirujanoId": 3,
+    "anestesiologoId": 4,
+    "asistentes": [
+      { "asistenteId": 7 }
+    ],
+    "documentos": [204]
+  }
+]

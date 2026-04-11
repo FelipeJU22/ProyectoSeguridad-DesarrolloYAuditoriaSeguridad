@@ -1,0 +1,63 @@
+[
+  {
+    "id": 1,
+    "nombre": "Juan Pérez",
+    "rol": 1,
+    "email": "paciente1@gmail.com",
+    "telefono": "+50688887777",
+    "password": "jorge123",
+    "cirugias": [101, 102]
+  },
+  {
+    "id": 2,
+    "nombre": "Laura Sánchez",
+    "rol": 1,
+    "email": "paciente2@gmail.com",
+    "telefono": "+50688886666",
+    "password": "jorge123",
+    "cirugias": [103, 104]
+  },
+  {
+    "id": 3,
+    "nombre": "Dra. María López",
+    "rol": 2,
+    "especialidad": "Cardiología",
+    "email": "doc1@gmail.com",
+    "password": "jorge123"
+  },
+  {
+    "id": 4,
+    "nombre": "Dr. Carlos Ramírez",
+    "rol": 4,
+    "email": "anes1@gmail.com",
+    "password": "jorge123"
+  },
+  {
+    "id": 5,
+    "nombre": "Ana Torres",
+    "rol": 3,
+    "email": "asis1@gmail.com",
+    "password": "jorge123"
+  },
+  {
+    "id": 6,
+    "nombre": "Luis Gómez",
+    "rol": 3,
+    "email": "asis2@gmail.com",
+    "password": "jorge123"
+  },
+  {
+    "id": 7,
+    "nombre": "Sofía Herrera",
+    "rol": 3,
+    "email": "asis3@gmail.com",
+    "password": "jorge123"
+  },
+  {
+    "id": 8,
+    "nombre": "Administrador General",
+    "rol": 0,
+    "email": "admin@gmail.com",
+    "password": "jorge123"
+  }
+]
