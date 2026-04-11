@@ -74,6 +74,7 @@ database/
     ├── 08_security_tables.sql
     ├── 09_indexes.sql
     └── 10_triggers.sql
+    └── 11_seed.sql
 ```
 
 ---
