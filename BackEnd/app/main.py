@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import usuarios
+from app.routers import usuarios, auth
 from app.core.config import settings
 
 app = FastAPI(
@@ -12,6 +12,12 @@ app.include_router(
     usuarios.router,
     prefix="/api/v1",
     tags=["Usuarios"]
+)
+
+app.include_router(
+    auth.router,
+    prefix="/api/v1",
+    tags=["Autenticación"]
 )
 
 @app.get("/", tags=["Root"])

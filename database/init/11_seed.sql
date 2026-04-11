@@ -27,53 +27,49 @@ INSERT INTO tipos_cirugia (id, nombre, descripcion, duracion_estimada_minutos) V
 -- ============================================================
 
 INSERT INTO usuarios (id, correo, hash_contrasena, rol, nombre, apellido, telefono) VALUES
-    -- cirujanos  contraseña: Cirujano1234!
     ('b0000000-0000-0000-0000-000000000001',
      'cirujano1@hospital.tec',
-     '$2b$12$FKo3R9vP8mXsYtN2eQu7AeW1cHjD4kL6nM5pR0sT8uV2wX4yZ6aB',
+     '$2a$12$5gDhkJ9eukLiZA3lW17tmeYmYV/8pWeCb8YTvA/Z.ZsD2EA7wh4tS',
      'cirujano', 'Andrés', 'López', '+50688880001'),
 
     ('b0000000-0000-0000-0000-000000000002',
      'cirujano2@hospital.tec',
-     '$2b$12$FKo3R9vP8mXsYtN2eQu7AeW1cHjD4kL6nM5pR0sT8uV2wX4yZ6aB',
+     '$2a$12$5gDhkJ9eukLiZA3lW17tmeYmYV/8pWeCb8YTvA/Z.ZsD2EA7wh4tS',
      'cirujano', 'María', 'Soto', '+50688880002'),
 
-    -- anestesiólogos  contraseña: Anestesiologo1234!
     ('b0000000-0000-0000-0000-000000000003',
      'anestesiologo1@hospital.tec',
-     '$2b$12$9Xa8Kb3Lm7Nq5Rp1Ts6WeY0Zc4Df2Gh6Ij8Kl0Mn2Op4Qr6St8Uv',
+     '$2a$12$kTH6Bzp8xLWmHy/.qDFyBO6mAaUzPY.SN1ZwdjKZBpEgtURIA1dJG',
      'anestesiologo', 'Luis', 'Vega', '+50688880003'),
 
     ('b0000000-0000-0000-0000-000000000004',
      'anestesiologo2@hospital.tec',
-     '$2b$12$9Xa8Kb3Lm7Nq5Rp1Ts6WeY0Zc4Df2Gh6Ij8Kl0Mn2Op4Qr6St8Uv',
+     '$2a$12$kTH6Bzp8xLWmHy/.qDFyBO6mAaUzPY.SN1ZwdjKZBpEgtURIA1dJG',
      'anestesiologo', 'Ana', 'Jiménez', '+50688880004'),
 
-    -- asistentes  contraseña: Asistente1234!
     ('b0000000-0000-0000-0000-000000000005',
      'asistente1@hospital.tec',
-     '$2b$12$3Rb7Ud9We1Xf4Yg8Zh2Ai5Bj0Ck6Dl9Em3Fn7Go1Hp5Iq8Jr2Ks6L',
+     '$2a$12$4YtoWRek8iLi/8K/eJ9oqevhD3ADSCCtnqwGQR9tyc82zLMiShNR6',
      'asistente', 'Pedro', 'Castro', '+50688880005'),
 
     ('b0000000-0000-0000-0000-000000000006',
      'asistente2@hospital.tec',
-     '$2b$12$3Rb7Ud9We1Xf4Yg8Zh2Ai5Bj0Ck6Dl9Em3Fn7Go1Hp5Iq8Jr2Ks6L',
+     '$2a$12$4YtoWRek8iLi/8K/eJ9oqevhD3ADSCCtnqwGQR9tyc82zLMiShNR6',
      'asistente', 'Laura', 'Rodríguez', '+50688880006'),
 
-    -- pacientes  contraseña: Paciente1234!
     ('b0000000-0000-0000-0000-000000000007',
      'paciente1@hospital.tec',
-     '$2b$12$7Vb5Wc8Xd2Ye6Zf0Ag4Bh9Ci3Dj7Ek1Fl5Gm9Hn3Io7Jp1Kq5Lr9',
+     '$2a$12$3F0HgVI7mEsbZ6lFR.pzse2q7Sn3BCOOcq5VM9q/T1YDiP1jAUSHq',
      'paciente', 'Roberto', 'Hernández', '+50688880007'),
 
     ('b0000000-0000-0000-0000-000000000008',
      'paciente2@hospital.tec',
-     '$2b$12$7Vb5Wc8Xd2Ye6Zf0Ag4Bh9Ci3Dj7Ek1Fl5Gm9Hn3Io7Jp1Kq5Lr9',
+     '$2a$12$3F0HgVI7mEsbZ6lFR.pzse2q7Sn3BCOOcq5VM9q/T1YDiP1jAUSHq',
      'paciente', 'Carmen', 'Ramírez', '+50688880008'),
 
     ('b0000000-0000-0000-0000-000000000009',
      'paciente3@hospital.tec',
-     '$2b$12$7Vb5Wc8Xd2Ye6Zf0Ag4Bh9Ci3Dj7Ek1Fl5Gm9Hn3Io7Jp1Kq5Lr9',
+     '$2a$12$3F0HgVI7mEsbZ6lFR.pzse2q7Sn3BCOOcq5VM9q/T1YDiP1jAUSHq',
      'paciente', 'Jorge', 'Quesada', '+50688880009');
 
 -- ============================================================
