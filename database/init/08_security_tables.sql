@@ -1,48 +1,48 @@
 -- ============================================================
--- Security Tables
--- Depends on: 03_core_tables.sql
+-- Tablas de seguridad
+-- Depende de: 03_tablas_principales.sql
 -- ============================================================
 
--- Track active sessions (allows server-side revocation)
-CREATE TABLE sessions (
+-- Seguimiento de sesiones activas (permite revocación del lado del servidor)
+CREATE TABLE sesiones (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    token_hash      VARCHAR(255) NOT NULL UNIQUE,    -- hash of the JWT/session token
-    ip_address      INET,
-    user_agent      TEXT,
-    expires_at      TIMESTAMPTZ NOT NULL,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    usuario_id      UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    hash_token      VARCHAR(255) NOT NULL UNIQUE,     -- hash del token de sesión/JWT
+    direccion_ip    INET,
+    agente_usuario  TEXT,
+    expira_en       TIMESTAMPTZ NOT NULL,
+    creado_en       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Audit log for sensitive actions (principle of security by layers)
-CREATE TABLE audit_logs (
+-- Registro de auditoría para acciones sensibles (principio de seguridad por capas)
+CREATE TABLE registros_auditoria (
     id              BIGSERIAL PRIMARY KEY,
-    user_id         UUID REFERENCES users(id) ON DELETE SET NULL,
-    action          VARCHAR(100) NOT NULL,           -- e.g. 'LOGIN', 'CREATE_SURGERY', 'DELETE_DOCUMENT'
-    table_name      VARCHAR(100),
-    record_id       UUID,
-    old_values      JSONB,
-    new_values      JSONB,
-    ip_address      INET,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    usuario_id      UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+    accion          VARCHAR(100) NOT NULL,            -- ej. 'LOGIN', 'CREAR_CIRUGIA', 'ELIMINAR_DOCUMENTO'
+    nombre_tabla    VARCHAR(100),
+    registro_id     UUID,
+    valores_anteriores JSONB,
+    valores_nuevos  JSONB,
+    direccion_ip    INET,
+    creado_en       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Cookie consent tracking (required by project policy)
-CREATE TABLE cookie_consents (
+-- Registro de consentimiento de cookies (requerido por la política del proyecto)
+CREATE TABLE consentimientos_cookies (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID REFERENCES users(id) ON DELETE SET NULL,  -- null if anonymous
-    session_key     VARCHAR(255),                    -- anonymous identifier before login
-    accepted        BOOLEAN NOT NULL,
-    ip_address      INET,
-    user_agent      TEXT,
-    consented_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    usuario_id      UUID REFERENCES usuarios(id) ON DELETE SET NULL,  -- NULL si es anónimo
+    clave_sesion    VARCHAR(255),                 -- identificador anónimo antes del login
+    aceptado        BOOLEAN NOT NULL,
+    direccion_ip    INET,
+    agente_usuario  TEXT,
+    consentido_en   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Failed login attempts (brute-force protection)
-CREATE TABLE login_attempts (
+-- Intentos de inicio de sesión fallidos (protección contra fuerza bruta)
+CREATE TABLE intentos_login (
     id              BIGSERIAL PRIMARY KEY,
-    email           VARCHAR(255) NOT NULL,
-    ip_address      INET,
-    success         BOOLEAN NOT NULL DEFAULT FALSE,
-    attempted_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    correo          VARCHAR(255) NOT NULL,
+    direccion_ip    INET,
+    exito           BOOLEAN NOT NULL DEFAULT FALSE,
+    intentado_en    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

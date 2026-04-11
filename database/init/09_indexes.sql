@@ -1,36 +1,36 @@
 -- ============================================================
--- Indexes
--- Depends on: all table files
+-- Índices
+-- Depende de: todos los archivos de tablas
 -- ============================================================
 
--- Users
-CREATE INDEX idx_users_email   ON users(email);
-CREATE INDEX idx_users_role    ON users(role);
+-- Usuarios
+CREATE INDEX idx_usuarios_correo   ON usuarios(correo);
+CREATE INDEX idx_usuarios_rol      ON usuarios(rol);
 
--- Surgeries - most queried table
-CREATE INDEX idx_surgeries_scheduled_at     ON surgeries(scheduled_at);
-CREATE INDEX idx_surgeries_patient          ON surgeries(patient_id);
-CREATE INDEX idx_surgeries_surgeon          ON surgeries(surgeon_id);
-CREATE INDEX idx_surgeries_anesthesiologist ON surgeries(anesthesiologist_id);
-CREATE INDEX idx_surgeries_status           ON surgeries(status);
+-- Cirugías - tabla más consultada
+CREATE INDEX idx_cirugias_fecha_programada     ON cirugias(fecha_programada);
+CREATE INDEX idx_cirugias_paciente             ON cirugias(paciente_id);
+CREATE INDEX idx_cirugias_cirujano             ON cirugias(cirujano_id);
+CREATE INDEX idx_cirugias_anestesiologo        ON cirugias(anestesiologo_id);
+CREATE INDEX idx_cirugias_estado               ON cirugias(estado);
 
--- Appointments
-CREATE INDEX idx_appointments_patient   ON appointments(patient_id);
-CREATE INDEX idx_appointments_status    ON appointments(status);
+-- Citas
+CREATE INDEX idx_citas_paciente   ON citas(paciente_id);
+CREATE INDEX idx_citas_estado     ON citas(estado);
 
--- Documents
-CREATE INDEX idx_documents_surgery  ON documents(surgery_id);
-CREATE INDEX idx_documents_patient  ON documents(patient_id);
+-- Documentos
+CREATE INDEX idx_documentos_cirugia  ON documentos(cirugia_id);
+CREATE INDEX idx_documentos_paciente ON documentos(paciente_id);
 
--- Audit logs
-CREATE INDEX idx_audit_user     ON audit_logs(user_id);
-CREATE INDEX idx_audit_action   ON audit_logs(action);
-CREATE INDEX idx_audit_created  ON audit_logs(created_at);
+-- Registros de auditoría
+CREATE INDEX idx_registros_auditoria_usuario   ON registros_auditoria(usuario_id);
+CREATE INDEX idx_registros_auditoria_accion    ON registros_auditoria(accion);
+CREATE INDEX idx_registros_auditoria_creado    ON registros_auditoria(creado_en);
 
--- Sessions
-CREATE INDEX idx_sessions_user      ON sessions(user_id);
-CREATE INDEX idx_sessions_expires   ON sessions(expires_at);
+-- Sesiones
+CREATE INDEX idx_sesiones_usuario   ON sesiones(usuario_id);
+CREATE INDEX idx_sesiones_expira    ON sesiones(expira_en);
 
--- Login attempts (for rate limiting queries)
-CREATE INDEX idx_login_attempts_email ON login_attempts(email, attempted_at);
-CREATE INDEX idx_login_attempts_ip    ON login_attempts(ip_address, attempted_at);
+-- Intentos de login (para consultas de rate limiting)
+CREATE INDEX idx_intentos_login_correo ON intentos_login(correo, intentado_en);
+CREATE INDEX idx_intentos_login_ip     ON intentos_login(direccion_ip, intentado_en);

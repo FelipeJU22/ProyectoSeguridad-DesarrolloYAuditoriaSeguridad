@@ -1,44 +1,44 @@
 -- ============================================================
--- Appointments and Surgeries
--- Depends on: 03_core_tables.sql, 04_medical_staff_tables.sql, 05_surgery_catalog.sql
+-- Citas y cirugías
+-- Depende de: 03_tablas_principales.sql, 04_tablas_personal_medico.sql, 05_catalogo_cirugias.sql
 -- ============================================================
 
--- A patient requests an appointment which may become a surgery
-CREATE TABLE appointments (
+-- Un paciente solicita una cita que puede convertirse en una cirugía
+CREATE TABLE citas (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id          UUID NOT NULL REFERENCES patients(id),
-    surgery_type_id     UUID NOT NULL REFERENCES surgery_types(id),
-    requested_date      DATE NOT NULL,
-    status              appointment_status NOT NULL DEFAULT 'pending',
-    notes               TEXT,
-    reviewed_by         UUID REFERENCES users(id),   -- admin who approved/rejected
-    reviewed_at         TIMESTAMPTZ,
-    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    paciente_id         UUID NOT NULL REFERENCES pacientes(id),
+    tipo_cirugia_id     UUID NOT NULL REFERENCES tipos_cirugia(id),
+    fecha_solicitada    DATE NOT NULL,
+    estado              estado_cita NOT NULL DEFAULT 'pendiente',
+    notas               TEXT,
+    revisado_por        UUID REFERENCES usuarios(id),   -- administrador que aprobó/rechazó
+    revisado_en         TIMESTAMPTZ,
+    creado_en           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    actualizado_en      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Central surgery entity
-CREATE TABLE surgeries (
-    id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    appointment_id          UUID UNIQUE REFERENCES appointments(id),  -- nullable if created directly by admin
-    patient_id              UUID NOT NULL REFERENCES patients(id),
-    surgery_type_id         UUID NOT NULL REFERENCES surgery_types(id),
-    surgeon_id              UUID NOT NULL REFERENCES surgeons(id),
-    anesthesiologist_id     UUID NOT NULL REFERENCES anesthesiologists(id),
-    scheduled_at            TIMESTAMPTZ NOT NULL,
-    estimated_duration_min  INT,
-    operating_room          VARCHAR(50),
-    status                  surgery_status NOT NULL DEFAULT 'scheduled',
-    notes                   TEXT,
-    created_by              UUID NOT NULL REFERENCES users(id),
-    created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- Entidad central de cirugía
+CREATE TABLE cirugias (
+    id                          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cita_id                     UUID UNIQUE REFERENCES citas(id),  -- puede ser NULL si se crea directamente por admin
+    paciente_id                 UUID NOT NULL REFERENCES pacientes(id),
+    tipo_cirugia_id             UUID NOT NULL REFERENCES tipos_cirugia(id),
+    cirujano_id                 UUID NOT NULL REFERENCES cirujanos(id),
+    anestesiologo_id            UUID NOT NULL REFERENCES anestesiologos(id),
+    fecha_programada            TIMESTAMPTZ NOT NULL,
+    duracion_estimada_min       INT,
+    sala_operaciones            VARCHAR(50),
+    estado                      estado_cirugia NOT NULL DEFAULT 'programada',
+    notas                       TEXT,
+    creado_por                  UUID NOT NULL REFERENCES usuarios(id),
+    creado_en                   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    actualizado_en              TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Many-to-many: assistants assigned to a surgery
-CREATE TABLE surgery_assistants (
-    surgery_id      UUID NOT NULL REFERENCES surgeries(id) ON DELETE CASCADE,
-    assistant_id    UUID NOT NULL REFERENCES assistants(id),
-    assigned_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (surgery_id, assistant_id)
+-- Relación muchos-a-muchos: asistentes asignados a una cirugía
+CREATE TABLE cirugia_asistentes (
+    cirugia_id      UUID NOT NULL REFERENCES cirugias(id) ON DELETE CASCADE,
+    asistente_id    UUID NOT NULL REFERENCES asistentes(id),
+    asignado_en     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (cirugia_id, asistente_id)
 );

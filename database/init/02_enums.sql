@@ -1,34 +1,34 @@
 -- ============================================================
--- Enums
+-- Enumeraciones
 -- ============================================================
 
-CREATE TYPE user_role AS ENUM (
-    'admin',
-    'patient',
-    'surgeon',
-    'anesthesiologist',
-    'assistant'
+CREATE TYPE rol_usuario AS ENUM (
+    'administrador',
+    'paciente',
+    'cirujano',
+    'anestesiologo',
+    'asistente'
 );
 
-CREATE TYPE surgery_status AS ENUM (
-    'scheduled',
-    'in_progress',
-    'completed',
-    'cancelled',
-    'postponed'
+CREATE TYPE estado_cirugia AS ENUM (
+    'programada',
+    'en_progreso',
+    'completada',
+    'cancelada',
+    'pospuesta'
 );
 
-CREATE TYPE appointment_status AS ENUM (
-    'pending',
-    'approved',
-    'rejected',
-    'cancelled'
+CREATE TYPE estado_cita AS ENUM (
+    'pendiente',
+    'aprobada',
+    'rechazada',
+    'cancelada'
 );
 
-CREATE TYPE document_type AS ENUM (
-    'insurance_policy',
-    'medical_note',
-    'consent_form',
-    'lab_result',
-    'other'
+CREATE TYPE tipo_documento AS ENUM (
+    'poliza_seguro',
+    'nota_medica',
+    'consentimiento_informado',
+    'resultado_laboratorio',
+    'otro'
 );

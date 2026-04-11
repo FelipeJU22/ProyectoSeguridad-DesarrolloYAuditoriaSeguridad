@@ -1,13 +1,13 @@
 -- ============================================================
--- Surgery Types Catalog
--- Depends on: (no FK dependencies, standalone catalog)
+-- Catálogo de tipos de cirugía
+-- (catálogo independiente, sin dependencias FK)
 -- ============================================================
 
-CREATE TABLE surgery_types (
+CREATE TABLE tipos_cirugia (
     id                          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name                        VARCHAR(150) NOT NULL UNIQUE,
-    description                 TEXT,
-    estimated_duration_minutes  INT,
-    is_active                   BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at                  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    nombre                      VARCHAR(150) NOT NULL UNIQUE,
+    descripcion                 TEXT,
+    duracion_estimada_minutos   INT,
+    activo                      BOOLEAN NOT NULL DEFAULT TRUE,
+    creado_en                   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
