@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 name: "CodeQL Advanced Security"
 
 on:
@@ -7,27 +8,57 @@ on:
     branches: [ "main", "develop" ]
   schedule:
     - cron: '43 5 * * 5'
+=======
+name: "CodeQL Security Scan"
+
+on:
+  pull_request:
+    branches: ["Develop"]
+  push:
+    branches: ["Develop"]
+  schedule:
+    - cron: '20 23 * * 0'  # escaneo semanal
+>>>>>>> Stashed changes
 
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
+<<<<<<< Updated upstream
     permissions:
       security-events: write
       packages: read
       actions: read
+=======
+
+    permissions:
+      security-events: write
+>>>>>>> Stashed changes
       contents: read
+      actions: read
+      packages: read
 
     strategy:
       fail-fast: false
       matrix:
+<<<<<<< Updated upstream
         # Specified languages for Python, React (JS/TS), and Node.js
         language: [ 'javascript-typescript', 'python' ]
+=======
+        include:
+          - language: actions
+            build-mode: none
+          - language: javascript-typescript
+            build-mode: none
+          - language: python
+            build-mode: none
+>>>>>>> Stashed changes
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+<<<<<<< Updated upstream
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4
       with:
@@ -41,3 +72,16 @@ jobs:
       uses: github/codeql-action/analyze@v4
       with:
         category: "/language:${{matrix.language}}"
+=======
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          queries: security-extended,security-and-quality
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"
+>>>>>>> Stashed changes
