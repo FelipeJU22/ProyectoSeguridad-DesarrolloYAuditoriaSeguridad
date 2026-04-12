@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import usuarios, auth, cirugias, documentos
+from app.routers import usuarios, auth, cirugias, documentos, listas
 from app.core.config import settings
 
 from app.models import usuario, paciente, cirugia, tipo_cirugia, cirujano, anestesiologo, asistente, documento
@@ -41,6 +41,12 @@ app.include_router(
     documentos.router,
     prefix="/api/v1",
     tags=["Documentos"]
+)
+
+app.include_router(
+    listas.router,
+    prefix="/api/v1",
+    tags=["Listas"]
 )
 
 @app.get("/", tags=["Root"])

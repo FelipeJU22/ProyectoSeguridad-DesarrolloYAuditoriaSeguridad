@@ -7,7 +7,7 @@
 CREATE TABLE citas (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     paciente_id         UUID NOT NULL REFERENCES pacientes(id),
-    tipo_cirugia_id     UUID NOT NULL REFERENCES tipos_cirugia(id),
+    tipo_cirugia        VARCHAR(100) NOT NULL, 
     fecha_solicitada    DATE NOT NULL,
     estado              estado_cita NOT NULL DEFAULT 'pendiente',
     notas               TEXT,
@@ -22,7 +22,7 @@ CREATE TABLE cirugias (
     id                          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     cita_id                     UUID UNIQUE REFERENCES citas(id),  -- puede ser NULL si se crea directamente por admin
     paciente_id                 UUID NOT NULL REFERENCES pacientes(id),
-    tipo_cirugia_id             UUID NOT NULL REFERENCES tipos_cirugia(id),
+    tipo_cirugia                VARCHAR(100) NOT NULL, 
     cirujano_id                 UUID NOT NULL REFERENCES cirujanos(id),
     anestesiologo_id            UUID NOT NULL REFERENCES anestesiologos(id),
     fecha_programada            TIMESTAMPTZ NOT NULL,

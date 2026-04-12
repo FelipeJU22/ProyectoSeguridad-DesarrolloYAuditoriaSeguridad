@@ -15,3 +15,4 @@ class Paciente(Base):
     notas_medicas         = Column(String)
     creado_en             = Column(TIMESTAMP(timezone=True), nullable=False)
     actualizado_en        = Column(TIMESTAMP(timezone=True), nullable=False)
+    usuario = relationship("Usuario", foreign_keys=[usuario_id])

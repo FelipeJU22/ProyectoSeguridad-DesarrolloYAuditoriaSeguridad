@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import cirugiasData from '../../Data/cirugias.json';
-import usuariosData from '../../Data/usuarios.json';
 import './Cirujano.css';
 
 const EMPTY_FORM = {
-  pacienteId: '',
-  tipo: '',
-  fecha: '',
-  anestesiologoId: '',
-  asistentes: '',
+  paciente_id:          '',
+  tipo_cirugia:         '',
+  fecha_programada:     '',
+  anestesiologo_id:     '',
+  asistente_ids:        [],
+  duracion_estimada_min: '',
+  notas:                '',
 };
 
 function Cirujano() {
@@ -20,6 +20,9 @@ function Cirujano() {
   const [modalEditar, setModalEditar] = useState(false);
   const [form, setForm]             = useState(EMPTY_FORM);
   const [editTarget, setEditTarget] = useState(null);
+  const [listaPacientes, setListaPacientes]         = useState([]);
+  const [listaAnestesiologos, setListaAnestesiologos] = useState([]);
+  const [listaAsistentes, setListaAsistentes]         = useState([]);
 
   const usuarioActual = JSON.parse(localStorage.getItem('usuario') || '{}');
   const cirujanoId    = usuarioActual.id || 3;
@@ -28,13 +31,37 @@ function Cirujano() {
     : 'C';
 
   useEffect(() => {
-    setCirugias(cirugiasData.filter(c => c.cirujanoId === cirujanoId));
+    const fetchCirugias = async () => {
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/api/v1/cirugias/cirujano/${cirujanoId}`);
+        if (!response.ok) throw new Error('Error al obtener cirugías');
+        const data = await response.json();
+        setCirugias(data);
+      } catch (err) {
+        console.error('Error:', err);
+      }
+    };
+
+    if (cirujanoId) fetchCirugias();
   }, [cirujanoId]);
 
-  const getUsuarioNombre = (id) => {
-    const u = usuariosData.find(u => u.id === id);
-    return u ? u.nombre : `ID ${id}`;
-  };
+  useEffect(() => {
+    const fetchListas = async () => {
+      try {
+        const [pacientes, anestesiologos, asistentes] = await Promise.all([
+          fetch('http://127.0.0.1:8000/api/v1/listas/pacientes').then(r => r.json()),
+          fetch('http://127.0.0.1:8000/api/v1/listas/anestesiologos').then(r => r.json()),
+          fetch('http://127.0.0.1:8000/api/v1/listas/asistentes').then(r => r.json()),
+        ]);
+        setListaPacientes(pacientes);
+        setListaAnestesiologos(anestesiologos);
+        setListaAsistentes(asistentes);
+      } catch (err) {
+        console.error('Error cargando listas:', err);
+      }
+    };
+    fetchListas();
+  }, []);
 
   const getBadgeClass = (estado) => {
     const map = {
@@ -56,37 +83,51 @@ function Cirujano() {
     setModalCrear(true);
   };
 
-  const handleConfirmarCrear = () => {
-    const { pacienteId, tipo, fecha, anestesiologoId, asistentes } = form;
-    if (!pacienteId || !tipo || !fecha || !anestesiologoId) return;
+  const handleConfirmarCrear = async () => {
+    if (!form.paciente_id || !form.tipo_cirugia || !form.fecha_programada || !form.anestesiologo_id) return;
 
-    const asistentesArr = asistentes
-      ? asistentes.split(',').map(id => ({ asistenteId: parseInt(id.trim(), 10) })).filter(a => !isNaN(a.asistenteId))
-      : [];
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/v1/cirugias?usuario_id=${cirujanoId}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            paciente_id:           form.paciente_id,
+            tipo_cirugia:          form.tipo_cirugia,
+            fecha_programada:      `${form.fecha_programada}T00:00:00`,
+            anestesiologo_id:      form.anestesiologo_id,
+            asistente_ids:         form.asistente_ids,
+            duracion_estimada_min: form.duracion_estimada_min ? parseInt(form.duracion_estimada_min) : null,
+            notas:                 form.notas || null,
+          }),
+        }
+      );
 
-    const nuevaCirugia = {
-      id: Math.max(0, ...cirugias.map(c => c.id)) + 1,
-      pacienteId:      parseInt(pacienteId, 10),
-      tipo,
-      fecha,
-      estado:          'programada',
-      cirujanoId,
-      anestesiologoId: parseInt(anestesiologoId, 10),
-      asistentes:      asistentesArr,
-      documentos:      [],
-    };
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.detail || 'Error al crear cirugía');
+        return;
+      }
 
-    const payload = {
-      accion: 'CREAR_CIRUGIA',
-      cirujanoId,
-      cirugia: nuevaCirugia,
-      timestamp: new Date().toISOString(),
-    };
+      const nueva = await response.json();
+      setCirugias(prev => [...prev, nueva]);
+      setModalCrear(false);
 
-    console.log('[BACKEND → POST /cirugias]', JSON.stringify(payload, null, 2));
+    } catch (err) {
+      console.error('Error:', err);
+      alert('No se pudo conectar con el servidor.');
+    }
+  };
 
-    setCirugias(prev => [...prev, nuevaCirugia]);
-    setModalCrear(false);
+  // ─── TOGGLE ASISTENTE ─────────────────────────────────────────────────────
+  const handleToggleAsistente = (id) => {
+    setForm(prev => ({
+      ...prev,
+      asistente_ids: prev.asistente_ids.includes(id)
+        ? prev.asistente_ids.filter(a => a !== id)
+        : [...prev.asistente_ids, id]
+    }));
   };
 
   // ─── EDITAR CIRUGÍA ───────────────────────────────────────────────────────
@@ -94,51 +135,59 @@ function Cirujano() {
   const handleAbrirEditar = (cirugia) => {
     setEditTarget(cirugia);
     setForm({
-      pacienteId:      cirugia.pacienteId,
-      tipo:            cirugia.tipo,
-      fecha:           cirugia.fecha,
-      anestesiologoId: cirugia.anestesiologoId,
-      asistentes:      cirugia.asistentes?.map(a => a.asistenteId).join(', ') || '',
+      paciente_id:           cirugia.paciente_id,
+      tipo_cirugia:          cirugia.tipo_cirugia,
+      fecha_programada:      cirugia.fecha_programada.split('T')[0],
+      anestesiologo_id:      cirugia.anestesiologo_id,
+      asistente_ids:         cirugia.asistentes.map(a => a.id),
+      duracion_estimada_min: cirugia.duracion_estimada_min || '',
+      notas:                 cirugia.notas || '',
     });
     setModalEditar(true);
   };
 
-  const handleConfirmarEditar = () => {
-    const { tipo, fecha, anestesiologoId, asistentes } = form;
-    if (!tipo || !fecha || !anestesiologoId) return;
+  const handleConfirmarEditar = async () => {
+    if (!form.tipo_cirugia || !form.fecha_programada || !form.anestesiologo_id) return;
 
-    const asistentesArr = asistentes
-      ? asistentes.split(',').map(id => ({ asistenteId: parseInt(id.trim(), 10) })).filter(a => !isNaN(a.asistenteId))
-      : [];
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/v1/cirugias/${editTarget.id}?usuario_id=${cirujanoId}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tipo_cirugia:          form.tipo_cirugia,
+            fecha_programada:      `${form.fecha_programada}T00:00:00`,
+            anestesiologo_id:      form.anestesiologo_id,
+            asistente_ids:         form.asistente_ids,
+            duracion_estimada_min: form.duracion_estimada_min ? parseInt(form.duracion_estimada_min) : null,
+            notas:                 form.notas || null,
+          }),
+        }
+      );
 
-    const cirugiaNueva = {
-      ...editTarget,
-      tipo,
-      fecha,
-      anestesiologoId: parseInt(anestesiologoId, 10),
-      asistentes: asistentesArr,
-    };
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.detail || 'Error al editar cirugía');
+        return;
+      }
 
-    const payload = {
-      accion: 'EDITAR_CIRUGIA',
-      cirujanoId,
-      cirugiaId: editTarget.id,
-      cambios: { tipo, fecha, anestesiologoId: parseInt(anestesiologoId, 10), asistentes: asistentesArr },
-      timestamp: new Date().toISOString(),
-    };
+      const actualizada = await response.json();
+      setCirugias(prev => prev.map(c => c.id === editTarget.id ? actualizada : c));
+      setModalEditar(false);
+      setEditTarget(null);
 
-    console.log('[BACKEND → PUT /cirugias/:id]', JSON.stringify(payload, null, 2));
-
-    setCirugias(prev => prev.map(c => c.id === editTarget.id ? cirugiaNueva : c));
-    setModalEditar(false);
-    setEditTarget(null);
+    } catch (err) {
+      console.error('Error:', err);
+      alert('No se pudo conectar con el servidor.');
+    }
   };
 
   // ─── EVENTOS CALENDARIO ───────────────────────────────────────────────────
 
   const eventos = cirugias.map(c => ({
-    title: `${c.tipo} — ${getUsuarioNombre(c.pacienteId)}`,
-    date: c.fecha,
+    title: c.tipo_cirugia,
+    date: c.fecha_programada.split('T')[0],
     backgroundColor: c.estado === 'completada' ? '#16a34a'
       : c.estado === 'cancelada' ? '#dc2626' : '#0d7c5f',
     borderColor: 'transparent',
@@ -229,18 +278,16 @@ function Cirujano() {
                     {cirugias.map(c => (
                       <tr key={c.id}>
                         <td>{c.id}</td>
-                        <td>{getUsuarioNombre(c.pacienteId)}</td>
-                        <td>{c.tipo}</td>
-                        <td>{c.fecha}</td>
+                        <td>{c.paciente_nombre} {c.paciente_apellido}</td>
+                        <td>{c.tipo_cirugia}</td>
+                        <td>{new Date(c.fecha_programada).toLocaleDateString('es-CR')}</td>
                         <td>
                           <span className={`badge ${getBadgeClass(c.estado)}`}>
                             {c.estado}
                           </span>
                         </td>
-                        <td>{getUsuarioNombre(c.anestesiologoId)}</td>
-                        <td>
-                          {c.asistentes?.map(a => getUsuarioNombre(a.asistenteId)).join(', ') || '—'}
-                        </td>
+                        <td>{c.anestesiologo_nombre} {c.anestesiologo_apellido}</td>
+                        <td>{c.asistentes?.map(a => `${a.nombre} ${a.apellido}`).join(', ') || '—'}</td>
                         <td>
                           <button
                             className="btn btn-secondary btn-sm"
@@ -283,60 +330,105 @@ function Cirujano() {
           <div className="modal" onClick={e => e.stopPropagation()}>
             <h3>Nueva Cirugía</h3>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label>ID del Paciente</label>
-                <input
-                  type="number"
-                  name="pacienteId"
-                  value={form.pacienteId}
-                  onChange={handleFormChange}
-                  placeholder="Ej: 1"
-                />
-              </div>
-              <div className="form-group">
-                <label>ID del Anestesiólogo</label>
-                <input
-                  type="number"
-                  name="anestesiologoId"
-                  value={form.anestesiologoId}
-                  onChange={handleFormChange}
-                  placeholder="Ej: 4"
-                />
-              </div>
+            <div className="form-group">
+              <label>Paciente</label>
+              <select name="paciente_id" value={form.paciente_id} onChange={handleFormChange}>
+                <option value="">Seleccionar paciente</option>
+                {listaPacientes.map(p => (
+                  <option key={p.id} value={p.id}>{p.nombre} {p.apellido}</option>
+                ))}
+              </select>
             </div>
 
             <div className="form-group">
               <label>Tipo de cirugía</label>
               <input
                 type="text"
-                name="tipo"
-                value={form.tipo}
+                name="tipo_cirugia"
+                value={form.tipo_cirugia}
                 onChange={handleFormChange}
                 placeholder="Ej: Bypass coronario"
               />
             </div>
 
-            <div className="form-group">
-              <label>Fecha</label>
-              <input
-                type="date"
-                name="fecha"
-                value={form.fecha}
-                onChange={handleFormChange}
-              />
+            <div className="form-row">
+              <div className="form-group">
+                <label>Fecha</label>
+                <input
+                  type="date"
+                  name="fecha_programada"
+                  value={form.fecha_programada}
+                  onChange={handleFormChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Duración (min)</label>
+                <input
+                  type="number"
+                  name="duracion_estimada_min"
+                  value={form.duracion_estimada_min}
+                  onChange={handleFormChange}
+                  placeholder="Ej: 90"
+                />
+              </div>
             </div>
 
             <div className="form-group">
-              <label>IDs de Asistentes</label>
-              <input
-                type="text"
-                name="asistentes"
-                value={form.asistentes}
+              <label>Anestesiólogo</label>
+              <select name="anestesiologo_id" value={form.anestesiologo_id} onChange={handleFormChange}>
+                <option value="">Seleccionar anestesiólogo</option>
+                {listaAnestesiologos.map(a => (
+                  <option key={a.id} value={a.id}>{a.nombre} {a.apellido}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Asistentes</label>
+              <select
+                onChange={e => {
+                  const id = e.target.value;
+                  if (id && !form.asistente_ids.includes(id)) {
+                    setForm(prev => ({ ...prev, asistente_ids: [...prev.asistente_ids, id] }));
+                  }
+                  e.target.value = '';
+                }}
+              >
+                <option value="">Agregar asistente...</option>
+                {listaAsistentes
+                  .filter(a => !form.asistente_ids.includes(a.id))
+                  .map(a => (
+                    <option key={a.id} value={a.id}>{a.nombre} {a.apellido}</option>
+                  ))}
+              </select>
+
+              {form.asistente_ids.length > 0 && (
+                <div className="asistentes-seleccionados">
+                  {form.asistente_ids.map(id => {
+                    const a = listaAsistentes.find(a => a.id === id);
+                    return a ? (
+                      <span key={id} className="asistente-tag">
+                        {a.nombre} {a.apellido}
+                        <button onClick={() => setForm(prev => ({
+                          ...prev,
+                          asistente_ids: prev.asistente_ids.filter(i => i !== id)
+                        }))}>✕</button>
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label>Notas</label>
+              <textarea
+                name="notas"
+                value={form.notas}
                 onChange={handleFormChange}
-                placeholder="Ej: 5, 6, 7"
+                placeholder="Observaciones adicionales..."
+                rows={3}
               />
-              <p className="form-hint">Separados por coma. Opcional.</p>
             </div>
 
             <div className="modal-actions">
@@ -346,7 +438,7 @@ function Cirujano() {
               <button
                 className="btn btn-primary"
                 onClick={handleConfirmarCrear}
-                disabled={!form.pacienteId || !form.tipo || !form.fecha || !form.anestesiologoId}
+                disabled={!form.paciente_id || !form.tipo_cirugia || !form.fecha_programada || !form.anestesiologo_id}
               >
                 Crear cirugía
               </button>
@@ -359,48 +451,104 @@ function Cirujano() {
       {modalEditar && (
         <div className="modal-overlay" onClick={() => setModalEditar(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h3>Editar Cirugía #{editTarget?.id}</h3>
+            <h3>Editar Cirugía</h3>
+
+            <div className="form-group">
+              <label>Paciente</label>
+              <input
+                type="text"
+                value={`${editTarget?.paciente_nombre} ${editTarget?.paciente_apellido}`}
+                disabled
+                style={{ background: '#f0f0f0', cursor: 'not-allowed' }}
+              />
+            </div>
 
             <div className="form-group">
               <label>Tipo de cirugía</label>
               <input
                 type="text"
-                name="tipo"
-                value={form.tipo}
+                name="tipo_cirugia"
+                value={form.tipo_cirugia}
                 onChange={handleFormChange}
               />
             </div>
 
-            <div className="form-group">
-              <label>Fecha</label>
-              <input
-                type="date"
-                name="fecha"
-                value={form.fecha}
-                onChange={handleFormChange}
-              />
+            <div className="form-row">
+              <div className="form-group">
+                <label>Fecha</label>
+                <input
+                  type="date"
+                  name="fecha_programada"
+                  value={form.fecha_programada}
+                  onChange={handleFormChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Duración (min)</label>
+                <input
+                  type="number"
+                  name="duracion_estimada_min"
+                  value={form.duracion_estimada_min}
+                  onChange={handleFormChange}
+                />
+              </div>
             </div>
 
             <div className="form-group">
-              <label>ID del Anestesiólogo</label>
-              <input
-                type="number"
-                name="anestesiologoId"
-                value={form.anestesiologoId}
-                onChange={handleFormChange}
-              />
+              <label>Anestesiólogo</label>
+              <select name="anestesiologo_id" value={form.anestesiologo_id} onChange={handleFormChange}>
+                <option value="">Seleccionar anestesiólogo</option>
+                {listaAnestesiologos.map(a => (
+                  <option key={a.id} value={a.id}>{a.nombre} {a.apellido}</option>
+                ))}
+              </select>
             </div>
 
             <div className="form-group">
-              <label>IDs de Asistentes</label>
-              <input
-                type="text"
-                name="asistentes"
-                value={form.asistentes}
+              <label>Asistentes</label>
+              <select
+                onChange={e => {
+                  const id = e.target.value;
+                  if (id && !form.asistente_ids.includes(id)) {
+                    setForm(prev => ({ ...prev, asistente_ids: [...prev.asistente_ids, id] }));
+                  }
+                  e.target.value = '';
+                }}
+              >
+                <option value="">Agregar asistente...</option>
+                {listaAsistentes
+                  .filter(a => !form.asistente_ids.includes(a.id))
+                  .map(a => (
+                    <option key={a.id} value={a.id}>{a.nombre} {a.apellido}</option>
+                  ))}
+              </select>
+
+              {form.asistente_ids.length > 0 && (
+                <div className="asistentes-seleccionados">
+                  {form.asistente_ids.map(id => {
+                    const a = listaAsistentes.find(a => a.id === id);
+                    return a ? (
+                      <span key={id} className="asistente-tag">
+                        {a.nombre} {a.apellido}
+                        <button onClick={() => setForm(prev => ({
+                          ...prev,
+                          asistente_ids: prev.asistente_ids.filter(i => i !== id)
+                        }))}>✕</button>
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label>Notas</label>
+              <textarea
+                name="notas"
+                value={form.notas}
                 onChange={handleFormChange}
-                placeholder="Ej: 5, 6, 7"
+                rows={3}
               />
-              <p className="form-hint">Separados por coma. Opcional.</p>
             </div>
 
             <div className="modal-actions">
@@ -410,7 +558,7 @@ function Cirujano() {
               <button
                 className="btn btn-primary"
                 onClick={handleConfirmarEditar}
-                disabled={!form.tipo || !form.fecha || !form.anestesiologoId}
+                disabled={!form.tipo_cirugia || !form.fecha_programada || !form.anestesiologo_id}
               >
                 Guardar cambios
               </button>
