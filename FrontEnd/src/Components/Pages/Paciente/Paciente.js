@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import cirugiasData from '../../Data/cirugias.json';
-import usuariosData from '../../Data/usuarios.json';
 import './Paciente.css';
 
 function Paciente() {
@@ -218,18 +216,6 @@ useEffect(() => {
       console.error('Error:', err);
       alert('No se pudo conectar con el servidor.');
     }
-  };
-
-  const handleDescargarDocumento = (doc) => {
-    const payload = {
-      accion: 'DESCARGAR_DOCUMENTO',
-      pacienteId,
-      nombreArchivo: doc,
-      timestamp: new Date().toISOString(),
-    };
-
-    console.log('[BACKEND → GET /documentos/download]', JSON.stringify(payload, null, 2));
-    alert(`Descargando: ${doc}`);
   };
 
   // ─── EVENTOS PARA EL CALENDARIO ──────────────────────────────────────────

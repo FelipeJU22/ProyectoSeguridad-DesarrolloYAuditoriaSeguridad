@@ -8,6 +8,8 @@ from app.models.usuario import Usuario
 from app.models.paciente import Paciente
 from app.schemas.cirugia import CirugiaRespuesta, AsistenteEnCirugia, CirugiaCrearEntrada, CirugiaEditarEntrada
 from app.models.cirujano import Cirujano
+from app.models.anestesiologo import Anestesiologo
+from app.models.asistente import Asistente
 
 def obtener_paciente_por_usuario(usuario_id: UUID, db: Session) -> Paciente:
     paciente = db.query(Paciente).filter(Paciente.usuario_id == usuario_id).first()
@@ -168,6 +170,61 @@ def editar_cirugia(usuario_id: UUID, cirugia_id: UUID, datos: CirugiaEditarEntra
             asignado_en=datetime.now()
         ))
 
+    db.commit()
+    db.refresh(cirugia)
+    return construir_respuesta(cirugia)
+
+def obtener_anestesiologo_por_usuario(usuario_id: UUID, db: Session) -> Anestesiologo:
+    anestesiologo = db.query(Anestesiologo).filter(Anestesiologo.usuario_id == usuario_id).first()
+    if not anestesiologo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Perfil de anestesiólogo no encontrado"
+        )
+    return anestesiologo
+
+def obtener_cirugias_anestesiologo(usuario_id: UUID, db: Session) -> list[CirugiaRespuesta]:
+    anestesiologo = obtener_anestesiologo_por_usuario(usuario_id, db)
+    cirugias = db.query(Cirugia).filter(Cirugia.anestesiologo_id == anestesiologo.id).all()
+    return [construir_respuesta(c) for c in cirugias]
+
+def obtener_asistente_por_usuario(usuario_id: UUID, db: Session) -> Asistente:
+    asistente = db.query(Asistente).filter(Asistente.usuario_id == usuario_id).first()
+    if not asistente:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Perfil de asistente no encontrado"
+        )
+    return asistente
+
+def obtener_cirugias_asistente(usuario_id: UUID, db: Session) -> list[CirugiaRespuesta]:
+    asistente = obtener_asistente_por_usuario(usuario_id, db)
+    cirugias = (
+        db.query(Cirugia)
+        .join(CirugiaAsistente, CirugiaAsistente.cirugia_id == Cirugia.id)
+        .filter(CirugiaAsistente.asistente_id == asistente.id)
+        .all()
+    )
+    return [construir_respuesta(c) for c in cirugias]
+
+def cambiar_estado_cirugia(usuario_id: UUID, cirugia_id: UUID, nuevo_estado: EstadoCirugia, db: Session) -> CirugiaRespuesta:
+    asistente = obtener_asistente_por_usuario(usuario_id, db)
+
+    cirugia = (
+        db.query(Cirugia)
+        .join(CirugiaAsistente, CirugiaAsistente.cirugia_id == Cirugia.id)
+        .filter(Cirugia.id == cirugia_id, CirugiaAsistente.asistente_id == asistente.id)
+        .first()
+    )
+
+    if not cirugia:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cirugía no encontrada"
+        )
+
+    cirugia.estado = nuevo_estado
+    cirugia.actualizado_en = datetime.now()
     db.commit()
     db.refresh(cirugia)
     return construir_respuesta(cirugia)

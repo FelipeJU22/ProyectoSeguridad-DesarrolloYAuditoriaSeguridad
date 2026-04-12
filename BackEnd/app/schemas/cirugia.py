@@ -53,3 +53,6 @@ class CirugiaEditarEntrada(BaseModel):
     asistente_ids:         list[UUID] = []
     duracion_estimada_min: int | None = None
     notas:                 str | None = None
+
+class CambioEstadoEntrada(BaseModel):
+    estado: EstadoCirugia

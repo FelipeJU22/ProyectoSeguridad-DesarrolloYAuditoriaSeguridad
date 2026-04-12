@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import usuarios from '../../Data/usuarios.json';
 import './Login.css';
 
 // Mapeo de rol numérico → ruta

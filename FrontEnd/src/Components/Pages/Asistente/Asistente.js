@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import cirugiasData from '../../Data/cirugias.json';
-import usuariosData from '../../Data/usuarios.json';
 import './Asistente.css';
 
-const ESTADOS = ['programada', 'pendiente', 'completada', 'cancelada'];
+const ESTADOS = ['programada', 'en_progreso', 'completada', 'cancelada', 'pospuesta'];
 
 function Asistente() {
   const [cirugias, setCirugias] = useState([]);
@@ -18,16 +16,18 @@ function Asistente() {
     : 'A';
 
   useEffect(() => {
-    const filtered = cirugiasData.filter(c =>
-      c.asistentes.some(a => a.asistenteId === asistenteId)
-    );
-    setCirugias(filtered);
+    const fetchCirugias = async () => {
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/api/v1/cirugias/asistente/${asistenteId}`);
+        if (!response.ok) throw new Error('Error al obtener cirugías');
+        const data = await response.json();
+        setCirugias(data);
+      } catch (err) {
+        console.error('Error:', err);
+      }
+    };
+    if (asistenteId) fetchCirugias();
   }, [asistenteId]);
-
-  const getUsuarioNombre = (id) => {
-    const u = usuariosData.find(u => u.id === id);
-    return u ? u.nombre : `ID ${id}`;
-  };
 
   const getBadgeClass = (estado) => {
     const map = {
@@ -41,33 +41,40 @@ function Asistente() {
 
   // ─── CAMBIAR ESTADO ───────────────────────────────────────────────────────
 
-  const handleChangeEstado = (cirugiaId, nuevoEstado) => {
-    const anterior = cirugias.find(c => c.id === cirugiaId)?.estado;
+  const handleChangeEstado = async (cirugiaId, nuevoEstado) => {
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/v1/cirugias/${cirugiaId}/estado?usuario_id=${asistenteId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ estado: nuevoEstado }),
+        }
+      );
 
-    const payload = {
-      accion:      'ACTUALIZAR_ESTADO_CIRUGIA',
-      asistenteId,
-      cirugiaId,
-      estadoAnterior: anterior,
-      estadoNuevo:    nuevoEstado,
-      timestamp:   new Date().toISOString(),
-    };
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.detail || 'Error al cambiar estado');
+        return;
+      }
 
-    console.log('[BACKEND → PUT /cirugias/:id/estado]', JSON.stringify(payload, null, 2));
+      const actualizada = await response.json();
+      setCirugias(prev => prev.map(c => c.id === cirugiaId ? actualizada : c));
 
-    setCirugias(prev =>
-      prev.map(c => c.id === cirugiaId ? { ...c, estado: nuevoEstado } : c)
-    );
+    } catch (err) {
+      console.error('Error:', err);
+      alert('No se pudo conectar con el servidor.');
+    }
   };
 
   // ─── EVENTOS CALENDARIO ───────────────────────────────────────────────────
 
   const eventos = cirugias.map(c => ({
-    title: `${c.tipo} — ${getUsuarioNombre(c.pacienteId)}`,
-    date:  c.fecha,
+    title: `${c.tipo_cirugia} — ${c.paciente_nombre} ${c.paciente_apellido}`,
+    date: c.fecha_programada.split('T')[0],
     backgroundColor: c.estado === 'completada' ? '#16a34a'
-      : c.estado === 'cancelada'  ? '#dc2626'
-      : c.estado === 'pendiente'  ? '#94a3b8'
+      : c.estado === 'cancelada' ? '#dc2626'
+      : c.estado === 'pendiente' ? '#94a3b8'
       : '#b45309',
     borderColor: 'transparent',
   }));
@@ -151,10 +158,10 @@ function Asistente() {
                     {cirugias.map(c => (
                       <tr key={c.id}>
                         <td>{c.id}</td>
-                        <td>{getUsuarioNombre(c.pacienteId)}</td>
-                        <td>{c.tipo}</td>
-                        <td>{c.fecha}</td>
-                        <td>{getUsuarioNombre(c.cirujanoId)}</td>
+                        <td>{c.paciente_nombre} {c.paciente_apellido}</td>
+                        <td>{c.tipo_cirugia}</td>
+                        <td>{new Date(c.fecha_programada).toLocaleDateString('es-CR')}</td>
+                        <td>{c.cirujano_nombre} {c.cirujano_apellido}</td>
                         <td>
                           <span className={`badge ${getBadgeClass(c.estado)}`}>
                             {c.estado}

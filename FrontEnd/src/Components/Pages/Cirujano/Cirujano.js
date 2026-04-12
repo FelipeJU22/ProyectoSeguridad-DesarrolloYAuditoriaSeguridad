@@ -120,16 +120,6 @@ function Cirujano() {
     }
   };
 
-  // ─── TOGGLE ASISTENTE ─────────────────────────────────────────────────────
-  const handleToggleAsistente = (id) => {
-    setForm(prev => ({
-      ...prev,
-      asistente_ids: prev.asistente_ids.includes(id)
-        ? prev.asistente_ids.filter(a => a !== id)
-        : [...prev.asistente_ids, id]
-    }));
-  };
-
   // ─── EDITAR CIRUGÍA ───────────────────────────────────────────────────────
 
   const handleAbrirEditar = (cirugia) => {
