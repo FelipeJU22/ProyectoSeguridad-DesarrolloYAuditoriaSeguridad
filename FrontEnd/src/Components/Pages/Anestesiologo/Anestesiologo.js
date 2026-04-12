@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import cirugiasData from '../../Data/cirugias.json';
-import usuariosData from '../../Data/usuarios.json';
 import './Anestesiologo.css';
 
 function Anestesiologo() {
@@ -16,13 +14,18 @@ function Anestesiologo() {
     : 'AN';
 
   useEffect(() => {
-    setCirugias(cirugiasData.filter(c => c.anestesiologoId === anestesiologoId));
+    const fetchCirugias = async () => {
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/api/v1/cirugias/anestesiologo/${anestesiologoId}`);
+        if (!response.ok) throw new Error('Error al obtener cirugías');
+        const data = await response.json();
+        setCirugias(data);
+      } catch (err) {
+        console.error('Error:', err);
+      }
+    };
+    if (anestesiologoId) fetchCirugias();
   }, [anestesiologoId]);
-
-  const getUsuarioNombre = (id) => {
-    const u = usuariosData.find(u => u.id === id);
-    return u ? u.nombre : `ID ${id}`;
-  };
 
   const getBadgeClass = (estado) => {
     const map = {
@@ -37,11 +40,10 @@ function Anestesiologo() {
   // ─── EVENTOS CALENDARIO ───────────────────────────────────────────────────
 
   const eventos = cirugias.map(c => ({
-    title: `${c.tipo} — ${getUsuarioNombre(c.pacienteId)}`,
-    date:  c.fecha,
+    title: `${c.tipo_cirugia} — ${c.paciente_nombre} ${c.paciente_apellido}`,
+    date: c.fecha_programada.split('T')[0],
     backgroundColor: c.estado === 'completada' ? '#16a34a'
-      : c.estado === 'cancelada'  ? '#dc2626'
-      : c.estado === 'pendiente'  ? '#94a3b8'
+      : c.estado === 'cancelada' ? '#dc2626'
       : '#4f46e5',
     borderColor: 'transparent',
   }));
@@ -128,18 +130,16 @@ function Anestesiologo() {
                     {cirugias.map(c => (
                       <tr key={c.id}>
                         <td>{c.id}</td>
-                        <td>{getUsuarioNombre(c.pacienteId)}</td>
-                        <td>{c.tipo}</td>
-                        <td>{c.fecha}</td>
+                        <td>{c.paciente_nombre} {c.paciente_apellido}</td>
+                        <td>{c.tipo_cirugia}</td>
+                        <td>{new Date(c.fecha_programada).toLocaleDateString('es-CR')}</td>
                         <td>
                           <span className={`badge ${getBadgeClass(c.estado)}`}>
                             {c.estado}
                           </span>
                         </td>
-                        <td>{getUsuarioNombre(c.cirujanoId)}</td>
-                        <td>
-                          {c.asistentes?.map(a => getUsuarioNombre(a.asistenteId)).join(', ') || '—'}
-                        </td>
+                        <td>{c.cirujano_nombre} {c.cirujano_apellido}</td>
+                        <td>{c.asistentes?.map(a => `${a.nombre} ${a.apellido}`).join(', ') || '—'}</td>
                       </tr>
                     ))}
                   </tbody>

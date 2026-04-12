@@ -7,3 +7,6 @@ venv
 # Archivos temporales de Python.
 __pycache__/
 *.pyc
+
+# Ignorar documentos subidos
+documentos/
