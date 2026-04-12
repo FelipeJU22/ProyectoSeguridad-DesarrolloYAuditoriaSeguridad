@@ -3,8 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import usuarios, auth, cirugias, documentos, listas
 from app.core.config import settings
 
-from app.models import usuario, paciente, cirugia, tipo_cirugia, cirujano, anestesiologo, asistente, documento
-
 app = FastAPI(
     title=settings.APP_NAME,
     description="Aprendiendo FastAPI paso a paso",
