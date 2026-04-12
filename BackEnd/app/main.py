@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import usuarios, auth, cirugias
+from app.routers import usuarios, auth, cirugias, documentos
 from app.core.config import settings
 
-from app.models import usuario, paciente, cirugia, tipo_cirugia, cirujano, anestesiologo, asistente
+from app.models import usuario, paciente, cirugia, tipo_cirugia, cirujano, anestesiologo, asistente, documento
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -35,6 +35,12 @@ app.include_router(
     cirugias.router,
     prefix="/api/v1",
     tags=["Cirugías"]
+)
+
+app.include_router(
+    documentos.router,
+    prefix="/api/v1",
+    tags=["Documentos"]
 )
 
 @app.get("/", tags=["Root"])

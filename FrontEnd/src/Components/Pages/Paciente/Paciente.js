@@ -8,11 +8,15 @@ import './Paciente.css';
 function Paciente() {
   const [tabActiva, setTabActiva] = useState('citas');
   const [cirugias, setCirugias] = useState([]);
-  const [documentos, setDocumentos] = useState(['consentimiento_informado.pdf', 'examen_preoperatorio.pdf']);
+  const [documentos, setDocumentos] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [modalEditar, setModalEditar] = useState(false);
   const [nuevaFecha, setNuevaFecha] = useState('');
   const fileInputRef = useRef(null);
+
+  const [archivoSeleccionado, setArchivoSeleccionado] = useState(null);
+  const [modalTipoDoc, setModalTipoDoc] = useState(false);
+  const [tipoDocumento, setTipoDocumento] = useState('otro');
 
   // Leer el usuario del localStorage (del login)
   const usuarioActual = JSON.parse(localStorage.getItem('usuario') || '{}');
@@ -34,6 +38,21 @@ useEffect(() => {
   };
 
   if (pacienteId) fetchCirugias();
+}, [pacienteId]);
+
+useEffect(() => {
+  const fetchDocumentos = async () => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/v1/documentos/paciente/${pacienteId}`);
+      if (!response.ok) throw new Error('Error al obtener documentos');
+      const data = await response.json();
+      setDocumentos(data);
+    } catch (err) {
+      console.error('Error:', err);
+    }
+  };
+
+  if (pacienteId) fetchDocumentos();
 }, [pacienteId]);
 
   const getBadgeClass = (estado) => {
@@ -128,29 +147,77 @@ useEffect(() => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const payload = {
-      accion: 'SUBIR_DOCUMENTO',
-      pacienteId,
-      nombreArchivo: file.name,
-      tipoArchivo: file.type,
-      tamanoBytes: file.size,
-      timestamp: new Date().toISOString(),
-    };
+    if (file.type !== 'application/pdf') {
+      alert('Solo se permiten archivos PDF.');
+      e.target.value = null;
+      return;
+    }
 
-    console.log('[BACKEND → POST /documentos/upload]', JSON.stringify(payload, null, 2));
-    setDocumentos(prev => [...prev, file.name]);
+    setArchivoSeleccionado(file);
+    setTipoDocumento('otro');
+    setModalTipoDoc(true);
+    e.target.value = null;
   };
 
-  const handleEliminarDocumento = (doc) => {
-    const payload = {
-      accion: 'ELIMINAR_DOCUMENTO',
-      pacienteId,
-      nombreArchivo: doc,
-      timestamp: new Date().toISOString(),
-    };
+  const handleConfirmarSubida = async () => {
+    if (!archivoSeleccionado) return;
 
-    console.log('[BACKEND → DELETE /documentos]', JSON.stringify(payload, null, 2));
-    setDocumentos(prev => prev.filter(d => d !== doc));
+    try {
+      const formData = new FormData();
+      formData.append('usuario_id', pacienteId);
+      formData.append('tipo_documento', tipoDocumento);
+      formData.append('archivo', archivoSeleccionado);
+
+      const response = await fetch('http://127.0.0.1:8000/api/v1/documentos/subir', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.detail || 'Error al subir documento');
+        return;
+      }
+
+      const nuevoDoc = await response.json();
+      setDocumentos(prev => [...prev, nuevoDoc]);
+      setModalTipoDoc(false);
+      setArchivoSeleccionado(null);
+
+    } catch (err) {
+      console.error('Error:', err);
+      alert('No se pudo conectar con el servidor.');
+    }
+  };
+
+  const handleVerDocumento = (doc) => {
+    window.open(
+      `http://127.0.0.1:8000/api/v1/documentos/${doc.id}/ver?usuario_id=${pacienteId}`,
+      '_blank'
+    );
+  };
+
+  const handleEliminarDocumento = async (doc) => {
+    if (!window.confirm(`¿Eliminar "${doc.nombre_archivo}"?`)) return;
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/v1/documentos/${doc.id}?usuario_id=${pacienteId}`,
+        { method: 'DELETE' }
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.detail || 'Error al eliminar');
+        return;
+      }
+
+      setDocumentos(prev => prev.filter(d => d.id !== doc.id));
+
+    } catch (err) {
+      console.error('Error:', err);
+      alert('No se pudo conectar con el servidor.');
+    }
   };
 
   const handleDescargarDocumento = (doc) => {
@@ -336,44 +403,50 @@ useEffect(() => {
           <div className="card">
             <div className="card-header">
               <span className="card-title">Mis Documentos</span>
-              <button
-                className="btn btn-primary"
-                onClick={() => fileInputRef.current?.click()}
-              >
+              <button className="btn btn-primary" onClick={() => fileInputRef.current?.click()}>
                 + Subir documento
               </button>
               <input
                 type="file"
                 ref={fileInputRef}
                 style={{ display: 'none' }}
+                accept="application/pdf"
                 onChange={handleSubirDocumento}
               />
             </div>
             <div className="card-body">
-              <ul className="doc-list">
-                {documentos.map(doc => (
-                  <li key={doc} className="doc-item">
+              {documentos.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-icon">📁</div>
+                  <p>No hay documentos subidos todavía.</p>
+                </div>
+              ) : (
+                <ul className="doc-list">
+                  {documentos.map(doc => (
+                  <li key={doc.id} className="doc-item">
                     <div className="doc-name">
                       <span className="doc-icon">📄</span>
-                      {doc}
+                      <div>
+                        <div style={{ fontWeight: '500' }}>{doc.nombre_archivo}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          {doc.tipo_documento.replace(/_/g, ' ')} ·{' '}
+                          {(doc.tamano_bytes / 1024).toFixed(1)} KB ·{' '}
+                          {new Date(doc.creado_en).toLocaleDateString('es-CR')}
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button
-                        className="btn btn-danger"
-                        onClick={() => handleEliminarDocumento(doc)}
-                      >
+                    <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
+                      <button className="btn btn-secondary" onClick={() => handleVerDocumento(doc)}>
+                        Ver
+                      </button>
+                      <button className="btn btn-danger" onClick={() => handleEliminarDocumento(doc)}>
                         Borrar
                       </button>
                     </div>
                   </li>
-                ))}
-                {documentos.length === 0 && (
-                  <div className="empty-state">
-                    <div className="empty-icon">📁</div>
-                    <p>No hay documentos subidos todavía.</p>
-                  </div>
-                )}
-              </ul>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         )}
@@ -398,6 +471,40 @@ useEffect(() => {
               </button>
               <button className="btn btn-primary" onClick={handleConfirmarEditar}>
                 Confirmar solicitud
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL TIPO DOCUMENTO */}
+      {modalTipoDoc && (
+        <div className="modal-overlay" onClick={() => setModalTipoDoc(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h3>Clasificar documento</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
+              {archivoSeleccionado?.name}
+            </p>
+            <div className="form-group">
+              <label>Tipo de documento</label>
+              <select
+                value={tipoDocumento}
+                onChange={e => setTipoDocumento(e.target.value)}
+                style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ccc' }}
+              >
+                <option value="poliza_seguro">Póliza de seguro</option>
+                <option value="nota_medica">Nota médica</option>
+                <option value="consentimiento_informado">Consentimiento informado</option>
+                <option value="resultado_laboratorio">Resultado de laboratorio</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => setModalTipoDoc(false)}>
+                Cancelar
+              </button>
+              <button className="btn btn-primary" onClick={handleConfirmarSubida}>
+                Subir documento
               </button>
             </div>
           </div>

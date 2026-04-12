@@ -19,7 +19,6 @@ CREATE INDEX idx_citas_paciente   ON citas(paciente_id);
 CREATE INDEX idx_citas_estado     ON citas(estado);
 
 -- Documentos
-CREATE INDEX idx_documentos_cirugia  ON documentos(cirugia_id);
 CREATE INDEX idx_documentos_paciente ON documentos(paciente_id);
 
 -- Registros de auditoría

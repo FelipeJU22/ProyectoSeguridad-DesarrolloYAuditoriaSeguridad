@@ -359,13 +359,12 @@ INSERT INTO cirugia_asistentes (cirugia_id, asistente_id) VALUES
 -- Asociados a paciente + a una de sus cirugías como referencia
 -- ============================================================
 
-INSERT INTO documentos (id, nombre_archivo, ruta_almacenamiento, tipo_documento, cirugia_id, paciente_id, subido_por) VALUES
+INSERT INTO documentos (id, nombre_archivo, ruta_almacenamiento, tipo_documento, paciente_id, subido_por) VALUES
     -- Paciente 1
     ('00000000-0000-0000-0000-000000002001',
      'poliza_seguro_paciente1.pdf',
      'documentos/pacientes/00000000-0000-0000-0000-000000000501/poliza_seguro_paciente1.pdf',
      'poliza_seguro',
-     '00000000-0000-0000-0000-000000001001',
      '00000000-0000-0000-0000-000000000501',
      '00000000-0000-0000-0000-000000000107'),
 
@@ -373,7 +372,6 @@ INSERT INTO documentos (id, nombre_archivo, ruta_almacenamiento, tipo_documento,
      'nota_medica_paciente1.pdf',
      'documentos/pacientes/00000000-0000-0000-0000-000000000501/nota_medica_paciente1.pdf',
      'nota_medica',
-     '00000000-0000-0000-0000-000000001001',
      '00000000-0000-0000-0000-000000000501',
      '00000000-0000-0000-0000-000000000101'),
 
@@ -382,7 +380,6 @@ INSERT INTO documentos (id, nombre_archivo, ruta_almacenamiento, tipo_documento,
      'poliza_seguro_paciente2.pdf',
      'documentos/pacientes/00000000-0000-0000-0000-000000000502/poliza_seguro_paciente2.pdf',
      'poliza_seguro',
-     '00000000-0000-0000-0000-000000001002',
      '00000000-0000-0000-0000-000000000502',
      '00000000-0000-0000-0000-000000000108'),
 
@@ -390,7 +387,6 @@ INSERT INTO documentos (id, nombre_archivo, ruta_almacenamiento, tipo_documento,
      'nota_medica_paciente2.pdf',
      'documentos/pacientes/00000000-0000-0000-0000-000000000502/nota_medica_paciente2.pdf',
      'nota_medica',
-     '00000000-0000-0000-0000-000000001002',
      '00000000-0000-0000-0000-000000000502',
      '00000000-0000-0000-0000-000000000102'),
 
@@ -399,7 +395,6 @@ INSERT INTO documentos (id, nombre_archivo, ruta_almacenamiento, tipo_documento,
      'poliza_seguro_paciente3.pdf',
      'documentos/pacientes/00000000-0000-0000-0000-000000000503/poliza_seguro_paciente3.pdf',
      'poliza_seguro',
-     '00000000-0000-0000-0000-000000001003',
      '00000000-0000-0000-0000-000000000503',
      '00000000-0000-0000-0000-000000000109'),
 
@@ -407,7 +402,6 @@ INSERT INTO documentos (id, nombre_archivo, ruta_almacenamiento, tipo_documento,
      'nota_medica_paciente3.pdf',
      'documentos/pacientes/00000000-0000-0000-0000-000000000503/nota_medica_paciente3.pdf',
      'nota_medica',
-     '00000000-0000-0000-0000-000000001003',
      '00000000-0000-0000-0000-000000000503',
      '00000000-0000-0000-0000-000000000101');
 
