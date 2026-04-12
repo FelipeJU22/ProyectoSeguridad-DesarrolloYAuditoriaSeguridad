@@ -21,15 +21,20 @@ function Paciente() {
     ? usuarioActual.nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
     : 'P';
 
-  useEffect(() => {
-    const filtered = cirugiasData.filter(c => c.pacienteId === pacienteId);
-    setCirugias(filtered);
-  }, [pacienteId]);
-
-  const getUsuarioNombre = (id) => {
-    const u = usuariosData.find(u => u.id === id);
-    return u ? u.nombre : 'Desconocido';
+useEffect(() => {
+  const fetchCirugias = async () => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/v1/cirugias/paciente/${pacienteId}`);
+      if (!response.ok) throw new Error('Error al obtener cirugías');
+      const data = await response.json();
+      setCirugias(data);
+    } catch (err) {
+      console.error('Error:', err);
+    }
   };
+
+  if (pacienteId) fetchCirugias();
+}, [pacienteId]);
 
   const getBadgeClass = (estado) => {
     const map = {
@@ -48,19 +53,36 @@ function Paciente() {
     );
   };
 
-  const handleSolicitarCancelacion = () => {
+  const handleSolicitarCancelacion = async () => {
     if (selectedIds.length === 0) return;
 
-    const payload = {
-      accion: 'SOLICITAR_CANCELACION_CIRUGIA',
-      pacienteId,
-      cirugiasIds: selectedIds,
-      timestamp: new Date().toISOString(),
-    };
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/v1/cirugias/cancelar?usuario_id=${pacienteId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cirugia_ids: selectedIds }),
+        }
+      );
 
-    console.log('[BACKEND → DELETE /cirugias/cancelar]', JSON.stringify(payload, null, 2));
-    alert(`Solicitud de cancelación enviada para ${selectedIds.length} cirugía(s).`);
-    setSelectedIds([]);
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.detail || 'Error al cancelar cirugías');
+        return;
+      }
+
+      const result = await response.json();
+      alert(`${result.total} cirugía(s) cancelada(s).`);
+      setSelectedIds([]);
+
+      const updated = await fetch(`http://127.0.0.1:8000/api/v1/cirugias/paciente/${pacienteId}`);
+      setCirugias(await updated.json());
+
+    } catch (err) {
+      console.error('Error:', err);
+      alert('No se pudo conectar con el servidor.');
+    }
   };
 
   const handleAbrirEditar = () => {
@@ -70,26 +92,36 @@ function Paciente() {
     setModalEditar(true);
   };
 
-  const handleConfirmarEditar = () => {
+  const handleConfirmarEditar = async () => {
     if (!nuevaFecha) return;
 
-    const cirugia = cirugias.find(c => c.id === selectedIds[0]);
-    const payload = {
-      accion: 'SOLICITAR_CAMBIO_FECHA',
-      pacienteId,
-      cirugiaId: selectedIds[0],
-      fechaAnterior: cirugia?.fecha,
-      fechaNueva: nuevaFecha,
-      timestamp: new Date().toISOString(),
-    };
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/v1/cirugias/${selectedIds[0]}/fecha?usuario_id=${pacienteId}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fecha_nueva: `${nuevaFecha}T00:00:00` }),
+        }
+      );
 
-    console.log('[BACKEND → PUT /cirugias/fecha]', JSON.stringify(payload, null, 2));
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.detail || 'Error al cambiar la fecha');
+        return;
+      }
 
-    setCirugias(prev =>
-      prev.map(c => c.id === selectedIds[0] ? { ...c, fecha: nuevaFecha } : c)
-    );
-    setModalEditar(false);
-    setSelectedIds([]);
+      const cirugiaActualizada = await response.json();
+      setCirugias(prev =>
+        prev.map(c => c.id === selectedIds[0] ? cirugiaActualizada : c)
+      );
+      setModalEditar(false);
+      setSelectedIds([]);
+
+    } catch (err) {
+      console.error('Error:', err);
+      alert('No se pudo conectar con el servidor.');
+    }
   };
 
   const handleSubirDocumento = (e) => {
@@ -136,8 +168,8 @@ function Paciente() {
   // ─── EVENTOS PARA EL CALENDARIO ──────────────────────────────────────────
 
   const eventos = cirugias.map(c => ({
-    title: c.tipo,
-    date: c.fecha,
+    title: c.tipo_cirugia,
+    date: c.fecha_programada.split('T')[0],
     backgroundColor: c.estado === 'completada' ? '#16a34a'
       : c.estado === 'cancelada' ? '#dc2626' : '#2563eb',
     borderColor: 'transparent',
@@ -240,18 +272,16 @@ function Paciente() {
                           />
                         </td>
                         <td>{c.id}</td>
-                        <td>{c.tipo}</td>
-                        <td>{c.fecha}</td>
+                        <td>{c.tipo_cirugia}</td>
+                        <td>{new Date(c.fecha_programada).toLocaleDateString('es-CR')}</td>
                         <td>
                           <span className={`badge ${getBadgeClass(c.estado)}`}>
                             {c.estado}
                           </span>
                         </td>
-                        <td>{getUsuarioNombre(c.cirujanoId)}</td>
-                        <td>{getUsuarioNombre(c.anestesiologoId)}</td>
-                        <td>
-                          {c.asistentes?.map(a => getUsuarioNombre(a.asistenteId)).join(', ') || '—'}
-                        </td>
+                        <td>{c.cirujano_nombre} {c.cirujano_apellido}</td>
+                        <td>{c.anestesiologo_nombre} {c.anestesiologo_apellido}</td>
+                        <td>{c.asistentes?.map(a => `${a.nombre} ${a.apellido}`).join(', ') || '—'}</td>
                       </tr>
                     ))}
                   </tbody>

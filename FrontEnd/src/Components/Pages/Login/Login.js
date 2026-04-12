@@ -19,40 +19,40 @@ function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
 
-    const usuario = usuarios.find(
-      (u) => u.email.toLowerCase() === email.trim().toLowerCase()
-    );
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/v1/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          correo: email.trim().toLowerCase(),
+          contrasena: password,
+        }),
+      });
 
-    if (!usuario) {
-      setError('El correo electrónico no está registrado.');
-      return;
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.detail || 'Error al iniciar sesión');
+        return;
+      }
+
+      const usuario = await response.json();
+      const ruta = ROL_RUTAS[usuario.rol];
+
+      if (!ruta) {
+        setError('Rol de usuario no válido.');
+        return;
+      }
+
+      localStorage.setItem('usuario', JSON.stringify(usuario));
+      navigate(ruta);
+
+    } catch (err) {
+      setError('No se pudo conectar con el servidor.');
     }
-
-    if (usuario.password !== password) {
-      setError('Contraseña incorrecta.');
-      return;
-    }
-
-    const ruta = ROL_RUTAS[usuario.rol];
-
-    if (!ruta) {
-      setError('Rol de usuario no válido.');
-      return;
-    }
-
-    console.log('[BACKEND → POST /auth/login]', JSON.stringify({
-      accion: 'LOGIN',
-      usuarioId: usuario.id,
-      rol: usuario.rol,
-      timestamp: new Date().toISOString(),
-    }, null, 2));
-
-    localStorage.setItem('usuario', JSON.stringify(usuario));
-    navigate(ruta);
   };
 
   return (
