@@ -10,6 +10,10 @@ services:
       - ./BackEnd:/app
     env_file:
       - ./BackEnd/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
 
   frontend:
     build: ./Frontend
@@ -23,3 +27,38 @@ services:
       - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend
+    restart: always
+
+  db:
+    image: postgres:16
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_DB: surgery_db
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d surgery_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  init:
+    image: python:3.12
+    container_name: postgres_init
+    depends_on:
+      db:
+        condition: service_healthy
+    working_dir: /app
+    volumes:
+      - ./database:/app/database
+    command: >
+      bash -c "pip install psycopg2-binary &&
+               python database/database_init.py"
+
+volumes:
+  pg_data:
