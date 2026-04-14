@@ -4,9 +4,9 @@ from pathlib import Path
 
 # Database configuration
 dbName = "surgery_db"
-dbUser = "postgres"
-dbPassword = "postgres"
-dbHost = "localhost"
+dbUser = "root"
+dbPassword = "root"
+dbHost = "db"
 dbPort = "5432"
 
 BASE_DIR = Path(__file__).resolve().parent

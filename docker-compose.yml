@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./BackEnd
+    container_name: backend_python
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./BackEnd:/app
+    env_file:
+      - ./BackEnd/.env
+
+  frontend:
+    build: ./Frontend
+    container_name: frontend_react
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./Frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - backend
