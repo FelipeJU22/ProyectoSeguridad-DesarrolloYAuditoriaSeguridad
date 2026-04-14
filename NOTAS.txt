@@ -1,0 +1,112 @@
+Revisar codigo HARDCODIADO, usado solo para pruebas
+#En docker-compose.yml
+    environment:
+      POSTGRES_DB: surgery_db
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+    ports:
+
+#En database_init.py, EN TEORIA EL SISTEMA FUNCIONA SIN ESTO YA QUE EL DOCKER LO HACE SOLO.
+
+# Database configuration
+dbName = "surgery_db"
+dbUser = "root"
+dbPassword = "root"
+dbHost = "db"
+dbPort = "5432"
+
+COPIA DEL DOCKER-COMPOSE.YML DEL PROFE
+# Workshop: tres servicios en una red compartida
+# Secretos: definidos en .env (ver .env.example). No commitear .env.
+
+services:
+  mysql:
+    image: mysql:8.0.40
+    container_name: workshop-mysql
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    # Host 3307 evita choque con MySQL/MariaDB instalados en la máquina (3306)
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 25s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  backend:
+    build: ./backend
+    container_name: workshop-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PORT: "3001"
+      NODE_ENV: production
+      DB_HOST: mysql
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_NAME: ${MYSQL_DATABASE}
+    ports:
+      - "127.0.0.1:3001:3001"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 256M
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:3001
+    container_name: workshop-frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      - backend
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m
+      - /var/cache/nginx:size=32m
+      - /var/run:size=16m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+
+volumes:
+  mysql_data:
