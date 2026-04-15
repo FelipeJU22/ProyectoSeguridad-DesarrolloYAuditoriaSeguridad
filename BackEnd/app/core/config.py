@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     APP_VERSION: str
     DATABASE_URL: str
     SECRET_KEY: str
-    ALLOWED_ORIGINS: list[str]
+    ALLOWED_ORIGINS: list[str] = ["*"]
 
     class Config:
         env_file = ".env"
