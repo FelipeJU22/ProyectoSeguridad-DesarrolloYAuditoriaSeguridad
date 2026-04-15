@@ -6,18 +6,42 @@ import Asistente from './Components/Pages/Asistente/Asistente';
 import Anestesiologo from './Components/Pages/Anestesiologo/Anestesiologo';
 import Paciente from './Components/Pages/Paciente/Paciente';
 import Administrador from './Components/Pages/Administrador/Administrador';
+import ProtectedRoute from './Components/ProtectedRoute';
 
 function App() {
   return (
     <Router>
       <div className="App">
         <Routes>
+          {/* Ruta pública */}
           <Route path="/" element={<Login />} />
-          <Route path="/cirujano" element={<Cirujano />} />
-          <Route path="/asistente" element={<Asistente />} />
-          <Route path="/anestesiologo" element={<Anestesiologo />} />
-          <Route path="/paciente" element={<Paciente />} />
-          <Route path="/administrador" element={<Administrador />} />
+
+          {/* Rutas protegidas por rol */}
+          <Route path="/cirujano" element={
+            <ProtectedRoute rolPermitido={2}>
+              <Cirujano />
+            </ProtectedRoute>
+          } />
+          <Route path="/asistente" element={
+            <ProtectedRoute rolPermitido={3}>
+              <Asistente />
+            </ProtectedRoute>
+          } />
+          <Route path="/anestesiologo" element={
+            <ProtectedRoute rolPermitido={4}>
+              <Anestesiologo />
+            </ProtectedRoute>
+          } />
+          <Route path="/paciente" element={
+            <ProtectedRoute rolPermitido={1}>
+              <Paciente />
+            </ProtectedRoute>
+          } />
+          <Route path="/administrador" element={
+            <ProtectedRoute rolPermitido={0}>
+              <Administrador />
+            </ProtectedRoute>
+          } />
         </Routes>
       </div>
     </Router>

@@ -5,17 +5,16 @@ services:
     image: postgres:16
     container_name: postgres_db
     restart: unless-stopped
-    environment:
-      POSTGRES_DB: surgery_db
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
+    env_file:
+    - ./BackEnd/.env
+
     ports:
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
       - ./database/db_init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U root -d surgery_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d surgery_db"]
       interval: 5s
       timeout: 5s
       retries: 10
