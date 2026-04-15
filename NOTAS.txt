@@ -1,3 +1,6 @@
+Para ejecutar el docker, desde carpeta principal.
+docker compose up --build
+
 Revisar codigo HARDCODIADO, usado solo para pruebas
 #En docker-compose.yml
     environment:
