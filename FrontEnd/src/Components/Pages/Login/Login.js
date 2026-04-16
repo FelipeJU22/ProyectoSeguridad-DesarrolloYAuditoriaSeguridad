@@ -2,15 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 
-// Mapeo de rol numérico → ruta
-const ROL_RUTAS = {
-  1: '/paciente',
-  2: '/cirujano',
-  3: '/asistente',
-  4: '/anestesiologo',
-  0: '/administrador',
-};
-
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,17 +29,15 @@ function Login() {
         return;
       }
 
-      const usuario = await response.json();
-      const ruta = ROL_RUTAS[usuario.rol];
+      const data = await response.json();
 
-      if (!ruta) {
-        setError('Rol de usuario no válido.');
-        return;
+      if (data.requires2FA) {
+        localStorage.setItem('tempUser', JSON.stringify({correo: email.trim().toLowerCase()}));
+        localStorage.setItem("2fa_challenge", data.challengeId);
+        navigate('/2fa');
+      } else {
+        setError('No se recibió el código de autenticación.');
       }
-
-      localStorage.setItem('usuario', JSON.stringify(usuario));
-      navigate(ruta);
-
     } catch (err) {
       setError('No se pudo conectar con el servidor.');
     }

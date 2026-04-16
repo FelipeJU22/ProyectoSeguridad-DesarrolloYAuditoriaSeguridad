@@ -23,3 +23,11 @@ class LoginRespuesta(BaseModel):
 
     class Config:
         from_attributes = True
+
+class TokenEntrada(BaseModel):
+    correo:     EmailStr
+    token_2fa:  str
+
+class TokenRespuesta(BaseModel):
+    requires2FA: bool
+    challengeId: str | None

@@ -1,13 +1,8 @@
 Para ejecutar el docker, desde carpeta principal.
 docker compose up --build
 
-Revisar codigo HARDCODIADO, usado solo para pruebas
-#En docker-compose.yml
-    environment:
-      POSTGRES_DB: surgery_db
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
-    ports:
+TOKEN UNIVERSAL TEMPORAL 
+token_de_acceso_temporal_para_pruebas
 
 #En database_init.py, EN TEORIA EL SISTEMA FUNCIONA SIN ESTO YA QUE EL DOCKER LO HACE SOLO.
 
@@ -113,3 +108,4 @@ services:
 
 volumes:
   mysql_data:
+
