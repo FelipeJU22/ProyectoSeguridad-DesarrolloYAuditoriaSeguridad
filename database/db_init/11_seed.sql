@@ -353,57 +353,7 @@ INSERT INTO cirugia_asistentes (cirugia_id, asistente_id) VALUES
     ('00000000-0000-0000-0000-000000001039', '00000000-0000-0000-0000-000000000401'),
     ('00000000-0000-0000-0000-000000001040', '00000000-0000-0000-0000-000000000402');
 
--- ============================================================
--- DOCUMENTOS
--- 2 documentos por paciente: póliza de seguro y nota médica
--- Asociados a paciente + a una de sus cirugías como referencia
--- ============================================================
 
-INSERT INTO documentos (id, nombre_archivo, ruta_almacenamiento, tipo_documento, paciente_id, subido_por) VALUES
-    -- Paciente 1
-    ('00000000-0000-0000-0000-000000002001',
-     'poliza_seguro_paciente1.pdf',
-     'documentos/pacientes/00000000-0000-0000-0000-000000000501/poliza_seguro_paciente1.pdf',
-     'poliza_seguro',
-     '00000000-0000-0000-0000-000000000501',
-     '00000000-0000-0000-0000-000000000107'),
-
-    ('00000000-0000-0000-0000-000000002002',
-     'nota_medica_paciente1.pdf',
-     'documentos/pacientes/00000000-0000-0000-0000-000000000501/nota_medica_paciente1.pdf',
-     'nota_medica',
-     '00000000-0000-0000-0000-000000000501',
-     '00000000-0000-0000-0000-000000000101'),
-
-    -- Paciente 2
-    ('00000000-0000-0000-0000-000000002003',
-     'poliza_seguro_paciente2.pdf',
-     'documentos/pacientes/00000000-0000-0000-0000-000000000502/poliza_seguro_paciente2.pdf',
-     'poliza_seguro',
-     '00000000-0000-0000-0000-000000000502',
-     '00000000-0000-0000-0000-000000000108'),
-
-    ('00000000-0000-0000-0000-000000002004',
-     'nota_medica_paciente2.pdf',
-     'documentos/pacientes/00000000-0000-0000-0000-000000000502/nota_medica_paciente2.pdf',
-     'nota_medica',
-     '00000000-0000-0000-0000-000000000502',
-     '00000000-0000-0000-0000-000000000102'),
-
-    -- Paciente 3
-    ('00000000-0000-0000-0000-000000002005',
-     'poliza_seguro_paciente3.pdf',
-     'documentos/pacientes/00000000-0000-0000-0000-000000000503/poliza_seguro_paciente3.pdf',
-     'poliza_seguro',
-     '00000000-0000-0000-0000-000000000503',
-     '00000000-0000-0000-0000-000000000109'),
-
-    ('00000000-0000-0000-0000-000000002006',
-     'nota_medica_paciente3.pdf',
-     'documentos/pacientes/00000000-0000-0000-0000-000000000503/nota_medica_paciente3.pdf',
-     'nota_medica',
-     '00000000-0000-0000-0000-000000000503',
-     '00000000-0000-0000-0000-000000000101');
 
 -- ============================================================
 -- CONSENTIMIENTOS DE COOKIES (uno por cada usuario)

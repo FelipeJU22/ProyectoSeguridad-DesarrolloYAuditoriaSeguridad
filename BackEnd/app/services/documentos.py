@@ -8,7 +8,7 @@ from app.models.paciente import Paciente
 from app.schemas.documento import DocumentoRespuesta
 from app.services.cirugias import obtener_paciente_por_usuario
 
-CARPETA_BASE = "documentos"
+CARPETA_BASE = "/app/documentos"
 
 def obtener_documentos_paciente(usuario_id: uuid.UUID, db: Session) -> list[DocumentoRespuesta]:
     paciente = obtener_paciente_por_usuario(usuario_id, db)
@@ -46,6 +46,8 @@ def subir_documento(
     with open(ruta_completa, "wb") as f:
         f.write(contenido)
 
+    ruta_relativa = ruta_completa.replace("/app/", "")
+
     # Guardar en base de datos
     nuevo_documento = Documento(
         id=uuid.uuid4(),
@@ -75,8 +77,9 @@ def obtener_ruta_documento(documento_id: uuid.UUID, usuario_id: uuid.UUID, db: S
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Documento no encontrado"
         )
+    ruta_real = os.path.join("/app", documento.ruta_almacenamiento)
 
-    if not os.path.exists(documento.ruta_almacenamiento):
+    if not os.path.exists(ruta_real):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="El archivo no existe en el servidor"
@@ -97,10 +100,11 @@ def eliminar_documento(documento_id: uuid.UUID, usuario_id: uuid.UUID, db: Sessi
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Documento no encontrado"
         )
+    ruta_real = os.path.join("/app", documento.ruta_almacenamiento)
 
     # Eliminar el archivo físico
-    if os.path.exists(documento.ruta_almacenamiento):
-        os.remove(documento.ruta_almacenamiento)
+    if os.path.exists(ruta_real):
+        os.remove(ruta_real)
 
     db.delete(documento)
     db.commit()
