@@ -1,8 +1,14 @@
 import bcrypt
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
+from fastapi import HTTPException, Request, status
 from app.models.usuario import Usuario
+from app.models.intento_login import IntentoLogin
 from app.schemas.auth import LoginRespuesta, TokenRespuesta, ROL_A_NUMERO
+
+# Config for brute-force protection
+MAX_INTENTOS   = 5
+VENTANA_TIEMPO = timedelta(minutes=15)
 
 def verificar_contrasena(contrasena_plana: str, hash_guardado: str) -> bool:
     hash_corregido = hash_guardado.replace("$2a$", "$2b$", 1)
@@ -14,10 +20,39 @@ def verificar_contrasena(contrasena_plana: str, hash_guardado: str) -> bool:
 def verificar_token_2fa(token_2fa: str) -> bool:
     return token_2fa == "token12345"
 
-def login_usuario(correo: str, contrasena: str, db: Session) -> TokenRespuesta:
-    
+def registrar_intento(correo: str, ip: str | None, exito: bool, db: Session):
+    """Save a login attempt to the DB."""
+    intento = IntentoLogin(correo=correo, direccion_ip=ip, exito=exito)
+    db.add(intento)
+    db.commit()
+
+def verificar_bloqueo(correo: str, db: Session):
+    """Raise 429 if the user has too many recent failed attempts."""
+    desde = datetime.now(timezone.utc) - VENTANA_TIEMPO
+    fallos = (
+        db.query(IntentoLogin)
+        .filter(
+            IntentoLogin.correo == correo,
+            IntentoLogin.exito == False,
+            IntentoLogin.intentado_en >= desde,
+        )
+        .count()
+    )
+    if fallos >= MAX_INTENTOS:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Demasiados intentos fallidos. Espere {int(VENTANA_TIEMPO.total_seconds() // 60)} minutos."
+        )
+
+def login_usuario(correo: str, contrasena: str, ip: str | None, db: Session) -> TokenRespuesta:
+    # Check lockout before anything else
+    verificar_bloqueo(correo, db)
+
     usuario = db.query(Usuario).filter(Usuario.correo == correo).first()
+
+    # Register failed attempt if user doesn't exist
     if not usuario:
+        registrar_intento(correo, ip, exito=False, db=db)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Correo o contraseña incorrectos"
@@ -30,15 +65,15 @@ def login_usuario(correo: str, contrasena: str, db: Session) -> TokenRespuesta:
         )
 
     if not verificar_contrasena(contrasena, usuario.hash_contrasena):
+        registrar_intento(correo, ip, exito=False, db=db)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Correo o contraseña incorrectos"
         )
 
-    return TokenRespuesta(
-        requires2FA = True,
-        challengeId= "challenge12345"
-    )
+    # Successful login
+    registrar_intento(correo, ip, exito=True, db=db)
+    return TokenRespuesta(requires2FA=True, challengeId="challenge12345")
 
 def login_2fa_function(correo: str, token_2fa: str, db: Session) -> LoginRespuesta:
     if not verificar_token_2fa(token_2fa):
