@@ -9,11 +9,13 @@ import Administrador from './Components/Pages/Administrador/Administrador';
 import TwoFactorAuthentication from './Components/Pages/Login/2FA';
 import ProtectedRoute from './Components/ProtectedRoute';
 import Require2FA from './Components/Require2FA';
+import CookieBanner from './Components/CookieBanner/CookieBanner'; // new
 
 function App() {
   return (
     <Router>
       <div className="App">
+        <CookieBanner /> {/* new */}
         <Routes>
           {/* Ruta pública */}
           <Route path="/" element={<Login />} />
