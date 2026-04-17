@@ -32,7 +32,6 @@ function Login() {
       const data = await response.json();
 
       if (data.requires2FA) {
-        localStorage.setItem('tempUser', JSON.stringify({correo: email.trim().toLowerCase()}));
         localStorage.setItem("2fa_challenge", data.challengeId);
         navigate('/2fa');
       } else {

@@ -22,13 +22,13 @@ function TwoFactorAuthentication() {
     setError('');
 
     try {
-      const tempUser = JSON.parse(localStorage.getItem('tempUser'));
+      const challenge = localStorage.getItem('2fa_challenge');
 
       const response = await fetch(`http://127.0.0.1:8000/api/v1/login_2FA`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          correo: tempUser.correo,
+          challenge: challenge, 
           token_2fa: code
         }),
       });

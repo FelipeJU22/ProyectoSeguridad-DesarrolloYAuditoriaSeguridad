@@ -12,7 +12,7 @@ def login(credenciales: LoginEntrada, request: Request, db: Session = Depends(ge
     return login_usuario(credenciales.correo, credenciales.contrasena, ip, db)
 
 @router.post("/login_2FA", response_model=LoginRespuesta)
-def login_2FA(datos: TokenEntrada, request: Request, db: Session = Depends(get_db)):
+def login_2FA(credenciales: TokenEntrada, request: Request, db: Session = Depends(get_db)):
     ip = request.client.host if request.client else None
     agente = request.headers.get("user-agent")
-    return login_2fa_function(datos.correo, datos.token_2fa, ip, agente, db)
+    return login_2fa_function(credenciales.challenge, credenciales.token_2fa, ip, agente, db)

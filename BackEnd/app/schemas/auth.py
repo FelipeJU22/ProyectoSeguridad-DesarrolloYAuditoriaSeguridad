@@ -27,7 +27,7 @@ class LoginRespuesta(BaseModel):
         from_attributes = True
 
 class TokenEntrada(BaseModel):
-    correo:     EmailStr
+    challenge:  str
     token_2fa:  str
 
 class TokenRespuesta(BaseModel):

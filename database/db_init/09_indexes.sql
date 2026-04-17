@@ -33,3 +33,7 @@ CREATE INDEX idx_sesiones_expira    ON sesiones(expira_en);
 -- Intentos de login (para consultas de rate limiting)
 CREATE INDEX idx_intentos_login_correo ON intentos_login(correo, intentado_en);
 CREATE INDEX idx_intentos_login_ip     ON intentos_login(direccion_ip, intentado_en);
+
+-- Tokens 
+CREATE INDEX idx_two_factor_challenge_id ON two_factor_challenges (challenge_id);
+CREATE INDEX idx_two_factor_expires ON two_factor_challenges (expires_at);

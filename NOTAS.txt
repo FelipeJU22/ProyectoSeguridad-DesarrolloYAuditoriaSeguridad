@@ -2,16 +2,33 @@ Para ejecutar el docker, desde carpeta principal.
 docker compose up --build
 
 TOKEN UNIVERSAL TEMPORAL 
-token_de_acceso_temporal_para_pruebas
+token12345
 
-#En database_init.py, EN TEORIA EL SISTEMA FUNCIONA SIN ESTO YA QUE EL DOCKER LO HACE SOLO.
+CAMBIAR LA LOGICA EN SERVICES/AUTH PARA HABILITAR CORREOS
 
-# Database configuration
-dbName = "surgery_db"
-dbUser = "root"
-dbPassword = "root"
-dbHost = "db"
-dbPort = "5432"
+    token_2fa = generar_token()
+    token_2fa_hash = hash_token(token_2fa)
+    challenge_Id = generar_challenge_id()
+
+    registrar_token(correo=correo, challenge_id=challenge_Id, token_hash=token_2fa_hash, db=db)
+
+    r = resend.Emails.send({
+    "from": "onboarding@resend.dev",
+    "to": resendCorreo,
+    "subject": "Codigo de verificacion Hospital TEC",
+    "html": f"""
+            <div style="font-family: Arial, sans-serif;">
+                <h2>Verificación de acceso</h2>
+                <p>Tu código de verificación es:</p>
+                <h1 style="letter-spacing: 4px;">{token_2fa}</h1>
+                <p>Este código expira en 10 minutos.</p>
+            </div>
+            """
+    })
+
+AGREGAR EN .ENV
+RESEND_API_KEY="re_Bh8nswc5_JUiuBTPQ5W5Tqw6NG8TkXDkk"
+RESEND_API_EMAIL= "josemaria130@outlook.es"
 
 COPIA DEL DOCKER-COMPOSE.YML DEL PROFE
 # Workshop: tres servicios en una red compartida
