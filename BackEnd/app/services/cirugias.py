@@ -10,6 +10,7 @@ from app.schemas.cirugia import CirugiaRespuesta, AsistenteEnCirugia, CirugiaCre
 from app.models.cirujano import Cirujano
 from app.models.anestesiologo import Anestesiologo
 from app.models.asistente import Asistente
+from app.services.auditoria import registrar_accion
 
 def obtener_paciente_por_usuario(usuario_id: UUID, db: Session) -> Paciente:
     paciente = db.query(Paciente).filter(Paciente.usuario_id == usuario_id).first()
@@ -69,10 +70,21 @@ def cambiar_fecha_cirugia(usuario_id: UUID, cirugia_id: UUID, fecha_nueva: datet
             detail=f"No se puede cambiar la fecha de una cirugía en estado {cirugia.estado}"
         )
 
+    fecha_anterior = str(cirugia.fecha_programada)
     cirugia.fecha_programada = fecha_nueva
     cirugia.actualizado_en = datetime.now()
     db.commit()
     db.refresh(cirugia)
+
+    registrar_accion(
+        db=db,
+        accion="EDITAR_FECHA_CIRUGIA",
+        usuario_id=usuario_id,
+        nombre_tabla="cirugias",
+        registro_id=cirugia_id,
+        valores_anteriores={"fecha_programada": fecha_anterior},
+        valores_nuevos={"fecha_programada": str(fecha_nueva)},
+    )
     return construir_respuesta(cirugia)
 
 def cancelar_cirugias(usuario_id: UUID, cirugia_ids: list[UUID], db: Session) -> dict:
@@ -90,9 +102,20 @@ def cancelar_cirugias(usuario_id: UUID, cirugia_ids: list[UUID], db: Session) ->
         if cirugia.estado not in [EstadoCirugia.programada, EstadoCirugia.pospuesta]:
             continue
 
+        estado_anterior = cirugia.estado.value
         cirugia.estado = EstadoCirugia.cancelada
         cirugia.actualizado_en = datetime.now()
         canceladas.append(str(cirugia_id))
+
+        registrar_accion(
+            db=db,
+            accion="CANCELAR_CIRUGIA",
+            usuario_id=usuario_id,
+            nombre_tabla="cirugias",
+            registro_id=cirugia_id,
+            valores_anteriores={"estado": estado_anterior},
+            valores_nuevos={"estado": "cancelada"},
+        )
 
     db.commit()
     return {"canceladas": canceladas, "total": len(canceladas)}
@@ -115,7 +138,7 @@ def crear_cirugia(usuario_id: UUID, datos: CirugiaCrearEntrada, db: Session) -> 
     cirujano = obtener_cirujano_por_usuario(usuario_id, db)
 
     nueva = Cirugia(
-        id=uuid.uuid4(),                          # ← genera el UUID en Python
+        id=uuid.uuid4(),
         paciente_id=datos.paciente_id,
         tipo_cirugia=datos.tipo_cirugia,
         cirujano_id=cirujano.id,
@@ -140,6 +163,19 @@ def crear_cirugia(usuario_id: UUID, datos: CirugiaCrearEntrada, db: Session) -> 
 
     db.commit()
     db.refresh(nueva)
+
+    registrar_accion(
+        db=db,
+        accion="CREAR_CIRUGIA",
+        usuario_id=usuario_id,
+        nombre_tabla="cirugias",
+        registro_id=nueva.id,
+        valores_nuevos={
+            "tipo_cirugia": nueva.tipo_cirugia,
+            "fecha_programada": str(nueva.fecha_programada),
+            "estado": nueva.estado.value,
+        },
+    )
     return construir_respuesta(nueva)
 
 def editar_cirugia(usuario_id: UUID, cirugia_id: UUID, datos: CirugiaEditarEntrada, db: Session) -> CirugiaRespuesta:
@@ -155,6 +191,15 @@ def editar_cirugia(usuario_id: UUID, cirugia_id: UUID, datos: CirugiaEditarEntra
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Cirugía no encontrada"
         )
+
+    # Capture previous values before modifying
+    anteriores = {
+        "tipo_cirugia": cirugia.tipo_cirugia,
+        "fecha_programada": str(cirugia.fecha_programada),
+        "anestesiologo_id": str(cirugia.anestesiologo_id),
+        "duracion_estimada_min": cirugia.duracion_estimada_min,
+        "notas": cirugia.notas,
+    }
 
     cirugia.tipo_cirugia          = datos.tipo_cirugia
     cirugia.fecha_programada      = datos.fecha_programada
@@ -172,6 +217,22 @@ def editar_cirugia(usuario_id: UUID, cirugia_id: UUID, datos: CirugiaEditarEntra
 
     db.commit()
     db.refresh(cirugia)
+
+    registrar_accion(
+        db=db,
+        accion="EDITAR_CIRUGIA",
+        usuario_id=usuario_id,
+        nombre_tabla="cirugias",
+        registro_id=cirugia_id,
+        valores_anteriores=anteriores,
+        valores_nuevos={
+            "tipo_cirugia": cirugia.tipo_cirugia,
+            "fecha_programada": str(cirugia.fecha_programada),
+            "anestesiologo_id": str(cirugia.anestesiologo_id),
+            "duracion_estimada_min": cirugia.duracion_estimada_min,
+            "notas": cirugia.notas,
+        },
+    )
     return construir_respuesta(cirugia)
 
 def obtener_anestesiologo_por_usuario(usuario_id: UUID, db: Session) -> Anestesiologo:
@@ -223,8 +284,19 @@ def cambiar_estado_cirugia(usuario_id: UUID, cirugia_id: UUID, nuevo_estado: Est
             detail="Cirugía no encontrada"
         )
 
+    estado_anterior = cirugia.estado.value
     cirugia.estado = nuevo_estado
     cirugia.actualizado_en = datetime.now()
     db.commit()
     db.refresh(cirugia)
+
+    registrar_accion(
+        db=db,
+        accion="CAMBIAR_ESTADO_CIRUGIA",
+        usuario_id=usuario_id,
+        nombre_tabla="cirugias",
+        registro_id=cirugia_id,
+        valores_anteriores={"estado": estado_anterior},
+        valores_nuevos={"estado": nuevo_estado.value},
+    )
     return construir_respuesta(cirugia)

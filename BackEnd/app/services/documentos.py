@@ -7,6 +7,7 @@ from app.models.documento import Documento, TipoDocumento
 from app.models.paciente import Paciente
 from app.schemas.documento import DocumentoRespuesta
 from app.services.cirugias import obtener_paciente_por_usuario
+from app.services.auditoria import registrar_accion
 
 CARPETA_BASE = "/app/documentos"
 
@@ -22,7 +23,6 @@ def subir_documento(
     db: Session
 ) -> DocumentoRespuesta:
 
-    # Validar que sea PDF
     if archivo.content_type != "application/pdf":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -31,24 +31,18 @@ def subir_documento(
 
     paciente = obtener_paciente_por_usuario(usuario_id, db)
 
-    # Crear carpeta del paciente si no existe
     carpeta_paciente = os.path.join(CARPETA_BASE, str(paciente.id))
     os.makedirs(carpeta_paciente, exist_ok=True)
 
-    # Nombre único para evitar colisiones
     nombre_unico = f"{uuid.uuid4()}_{archivo.filename}"
     ruta_completa = os.path.join(carpeta_paciente, nombre_unico)
 
-    # Leer y guardar el archivo
     contenido = archivo.file.read()
     tamano_bytes = len(contenido)
 
     with open(ruta_completa, "wb") as f:
         f.write(contenido)
 
-    ruta_relativa = ruta_completa.replace("/app/", "")
-
-    # Guardar en base de datos
     nuevo_documento = Documento(
         id=uuid.uuid4(),
         nombre_archivo=archivo.filename,
@@ -62,6 +56,19 @@ def subir_documento(
     db.add(nuevo_documento)
     db.commit()
     db.refresh(nuevo_documento)
+
+    registrar_accion(
+        db=db,
+        accion="SUBIR_DOCUMENTO",
+        usuario_id=usuario_id,
+        nombre_tabla="documentos",
+        registro_id=nuevo_documento.id,
+        valores_nuevos={
+            "nombre_archivo": nuevo_documento.nombre_archivo,
+            "tipo_documento": nuevo_documento.tipo_documento.value,
+            "tamano_bytes": nuevo_documento.tamano_bytes,
+        },
+    )
     return nuevo_documento
 
 def obtener_ruta_documento(documento_id: uuid.UUID, usuario_id: uuid.UUID, db: Session) -> str:
@@ -77,8 +84,8 @@ def obtener_ruta_documento(documento_id: uuid.UUID, usuario_id: uuid.UUID, db: S
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Documento no encontrado"
         )
-    ruta_real = os.path.join("/app", documento.ruta_almacenamiento)
 
+    ruta_real = os.path.join("/app", documento.ruta_almacenamiento)
     if not os.path.exists(ruta_real):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -100,12 +107,26 @@ def eliminar_documento(documento_id: uuid.UUID, usuario_id: uuid.UUID, db: Sessi
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Documento no encontrado"
         )
-    ruta_real = os.path.join("/app", documento.ruta_almacenamiento)
 
-    # Eliminar el archivo físico
+    # Capture info before deleting
+    anteriores = {
+        "nombre_archivo": documento.nombre_archivo,
+        "tipo_documento": documento.tipo_documento.value,
+    }
+
+    ruta_real = os.path.join("/app", documento.ruta_almacenamiento)
     if os.path.exists(ruta_real):
         os.remove(ruta_real)
 
     db.delete(documento)
     db.commit()
+
+    registrar_accion(
+        db=db,
+        accion="ELIMINAR_DOCUMENTO",
+        usuario_id=usuario_id,
+        nombre_tabla="documentos",
+        registro_id=documento_id,
+        valores_anteriores=anteriores,
+    )
     return {"mensaje": "Documento eliminado"}

@@ -5,8 +5,8 @@ from fastapi import HTTPException, Request, status
 from app.models.usuario import Usuario
 from app.models.intento_login import IntentoLogin
 from app.schemas.auth import LoginRespuesta, TokenRespuesta, ROL_A_NUMERO
+from app.services.auditoria import registrar_accion
 
-# Config for brute-force protection
 MAX_INTENTOS   = 5
 VENTANA_TIEMPO = timedelta(minutes=15)
 
@@ -45,12 +45,10 @@ def verificar_bloqueo(correo: str, db: Session):
         )
 
 def login_usuario(correo: str, contrasena: str, ip: str | None, db: Session) -> TokenRespuesta:
-    # Check lockout before anything else
     verificar_bloqueo(correo, db)
 
     usuario = db.query(Usuario).filter(Usuario.correo == correo).first()
 
-    # Register failed attempt if user doesn't exist
     if not usuario:
         registrar_intento(correo, ip, exito=False, db=db)
         raise HTTPException(
@@ -66,13 +64,30 @@ def login_usuario(correo: str, contrasena: str, ip: str | None, db: Session) -> 
 
     if not verificar_contrasena(contrasena, usuario.hash_contrasena):
         registrar_intento(correo, ip, exito=False, db=db)
+        # Audit failed login
+        registrar_accion(
+            db=db,
+            accion="LOGIN_FALLIDO",
+            usuario_id=usuario.id,
+            nombre_tabla="usuarios",
+            registro_id=usuario.id,
+            direccion_ip=ip,
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Correo o contraseña incorrectos"
         )
 
-    # Successful login
     registrar_intento(correo, ip, exito=True, db=db)
+    # Audit successful login
+    registrar_accion(
+        db=db,
+        accion="LOGIN",
+        usuario_id=usuario.id,
+        nombre_tabla="usuarios",
+        registro_id=usuario.id,
+        direccion_ip=ip,
+    )
     return TokenRespuesta(requires2FA=True, challengeId="challenge12345")
 
 def login_2fa_function(correo: str, token_2fa: str, db: Session) -> LoginRespuesta:
