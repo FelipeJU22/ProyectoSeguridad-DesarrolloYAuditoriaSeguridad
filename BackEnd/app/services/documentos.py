@@ -8,6 +8,7 @@ from app.models.paciente import Paciente
 from app.schemas.documento import DocumentoRespuesta
 from app.services.cirugias import obtener_paciente_por_usuario
 from app.services.auditoria import registrar_accion
+from app.services.sesiones import validar_y_renovar_sesion
 
 CARPETA_BASE = "/app/documentos"
 
@@ -16,13 +17,8 @@ def obtener_documentos_paciente(usuario_id: uuid.UUID, db: Session) -> list[Docu
     documentos = db.query(Documento).filter(Documento.paciente_id == paciente.id).all()
     return documentos
 
-def subir_documento(
-    usuario_id: uuid.UUID,
-    tipo_documento: TipoDocumento,
-    archivo: UploadFile,
-    db: Session
-) -> DocumentoRespuesta:
-
+def subir_documento(token: str, tipo_documento: TipoDocumento, archivo: UploadFile, db: Session) -> DocumentoRespuesta:
+    usuario_id = validar_y_renovar_sesion(token, db)
     if archivo.content_type != "application/pdf":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -94,7 +90,8 @@ def obtener_ruta_documento(documento_id: uuid.UUID, usuario_id: uuid.UUID, db: S
 
     return documento.ruta_almacenamiento
 
-def eliminar_documento(documento_id: uuid.UUID, usuario_id: uuid.UUID, db: Session) -> dict:
+def eliminar_documento(token: str, documento_id: uuid.UUID, db: Session) -> dict:
+    usuario_id = validar_y_renovar_sesion(token, db)
     paciente = obtener_paciente_por_usuario(usuario_id, db)
 
     documento = db.query(Documento).filter(

@@ -7,7 +7,7 @@ function Anestesiologo() {
   const [cirugias, setCirugias] = useState([]);
   const [tabActiva, setTabActiva] = useState('citas');
 
-  const usuarioActual    = JSON.parse(localStorage.getItem('usuario') || '{}');
+  const usuarioActual    = JSON.parse(sessionStorage.getItem('usuario') || '{}');
   const anestesiologoId  = usuarioActual.id || 4;
   const iniciales        = usuarioActual.nombre
     ? usuarioActual.nombre.split(' ').map(n => n[0]).join('').slice(1, 3).toUpperCase()
@@ -67,7 +67,7 @@ function Anestesiologo() {
                 anestesiologoId,
                 timestamp: new Date().toISOString(),
               });
-              localStorage.removeItem('usuario');
+              sessionStorage.removeItem('usuario');
               window.location.href = '/';
             }}
           >

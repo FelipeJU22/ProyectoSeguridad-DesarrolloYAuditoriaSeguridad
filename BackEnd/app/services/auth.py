@@ -6,6 +6,8 @@ from app.models.usuario import Usuario
 from app.models.intento_login import IntentoLogin
 from app.schemas.auth import LoginRespuesta, TokenRespuesta, ROL_A_NUMERO
 from app.services.auditoria import registrar_accion
+from fastapi import Request
+from app.services.sesiones import crear_sesion
 
 MAX_INTENTOS   = 5
 VENTANA_TIEMPO = timedelta(minutes=15)
@@ -90,18 +92,55 @@ def login_usuario(correo: str, contrasena: str, ip: str | None, db: Session) -> 
     )
     return TokenRespuesta(requires2FA=True, challengeId="challenge12345")
 
-def login_2fa_function(correo: str, token_2fa: str, db: Session) -> LoginRespuesta:
+def login_2fa_function(correo: str, token_2fa: str, ip: str | None, agente: str | None, db: Session) -> LoginRespuesta:
+    """
+    Verifica el código 2FA. Si es correcto, crea una sesión en BD y devuelve
+    los datos del usuario junto con el JWT.
+    ip y agente vienen del Request en el router.
+    """
     if not verificar_token_2fa(token_2fa):
+        # Auditar intento 2FA fallido
+        usuario = db.query(Usuario).filter(Usuario.correo == correo).first()
+        if usuario:
+            registrar_accion(
+                db=db,
+                accion="LOGIN_FALLIDO_2FA",
+                usuario_id=usuario.id,
+                nombre_tabla="usuarios",
+                registro_id=usuario.id,
+                direccion_ip=ip,
+            )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Código de autenticación incorrecto"
         )
+
     usuario = db.query(Usuario).filter(Usuario.correo == correo).first()
+
+    # Crear sesión y obtener JWT
+    token = crear_sesion(
+        usuario_id=usuario.id,
+        ip=ip,
+        agente=agente,
+        db=db,
+    )
+
+    # Auditar login exitoso completo
+    registrar_accion(
+        db=db,
+        accion="LOGIN_EXITOSO",
+        usuario_id=usuario.id,
+        nombre_tabla="usuarios",
+        registro_id=usuario.id,
+        direccion_ip=ip,
+    )
+
     return LoginRespuesta(
         id=usuario.id,
         nombre=usuario.nombre,
         apellido=usuario.apellido,
         correo=usuario.correo,
         telefono=usuario.telefono,
-        rol=ROL_A_NUMERO[usuario.rol]
+        rol=ROL_A_NUMERO[usuario.rol],
+        access_token=token,
     )

@@ -11,6 +11,8 @@ from app.models.cirujano import Cirujano
 from app.models.anestesiologo import Anestesiologo
 from app.models.asistente import Asistente
 from app.services.auditoria import registrar_accion
+from app.services.sesiones import validar_y_renovar_sesion
+
 
 def obtener_paciente_por_usuario(usuario_id: UUID, db: Session) -> Paciente:
     paciente = db.query(Paciente).filter(Paciente.usuario_id == usuario_id).first()
@@ -52,7 +54,8 @@ def obtener_cirugias_paciente(usuario_id: UUID, db: Session) -> list[CirugiaResp
     cirugias = db.query(Cirugia).filter(Cirugia.paciente_id == paciente.id).all()
     return [construir_respuesta(c) for c in cirugias]
 
-def cambiar_fecha_cirugia(usuario_id: UUID, cirugia_id: UUID, fecha_nueva: datetime, db: Session) -> CirugiaRespuesta:
+def cambiar_fecha_cirugia(token: str, cirugia_id: UUID, fecha_nueva: datetime, db: Session) -> CirugiaRespuesta:
+    usuario_id = validar_y_renovar_sesion(token, db)
     paciente = obtener_paciente_por_usuario(usuario_id, db)
     cirugia = db.query(Cirugia).filter(
         Cirugia.id == cirugia_id,
@@ -87,7 +90,8 @@ def cambiar_fecha_cirugia(usuario_id: UUID, cirugia_id: UUID, fecha_nueva: datet
     )
     return construir_respuesta(cirugia)
 
-def cancelar_cirugias(usuario_id: UUID, cirugia_ids: list[UUID], db: Session) -> dict:
+def cancelar_cirugias(token: str, cirugia_ids: list[UUID], db: Session) -> dict:
+    usuario_id = validar_y_renovar_sesion(token, db)
     paciente = obtener_paciente_por_usuario(usuario_id, db)
     canceladas = []
 
@@ -134,7 +138,54 @@ def obtener_cirugias_cirujano(usuario_id: UUID, db: Session) -> list[CirugiaResp
     cirugias = db.query(Cirugia).filter(Cirugia.cirujano_id == cirujano.id).all()
     return [construir_respuesta(c) for c in cirugias]
 
-def crear_cirugia(usuario_id: UUID, datos: CirugiaCrearEntrada, db: Session) -> CirugiaRespuesta:
+def crear_cirugia(token: str, datos: CirugiaCrearEntrada, db: Session) -> CirugiaRespuesta:
+    usuario_id = validar_y_renovar_sesion(token, db)
+    cirujano = obtener_cirujano_por_usuario(usuario_id, db)
+
+    nueva = Cirugia(
+        id=uuid.uuid4(),
+        paciente_id=datos.paciente_id,
+        tipo_cirugia=datos.tipo_cirugia,
+        cirujano_id=cirujano.id,
+        anestesiologo_id=datos.anestesiologo_id,
+        fecha_programada=datos.fecha_programada,
+        duracion_estimada_min=datos.duracion_estimada_min,
+        notas=datos.notas,
+        estado=EstadoCirugia.programada,
+        creado_por=usuario_id,
+        creado_en=datetime.now(),
+        actualizado_en=datetime.now()
+    )
+    db.add(nueva)
+    db.flush()
+
+    for asistente_id in datos.asistente_ids:
+        db.add(CirugiaAsistente(
+            cirugia_id=nueva.id,
+            asistente_id=asistente_id,
+            asignado_en=datetime.now()
+        ))
+
+    db.commit()
+    db.refresh(nueva)
+
+    registrar_accion(
+        db=db,
+        accion="CREAR_CIRUGIA",
+        usuario_id=usuario_id,
+        nombre_tabla="cirugias",
+        registro_id=nueva.id,
+        valores_nuevos={
+            "tipo_cirugia": nueva.tipo_cirugia,
+            "fecha_programada": str(nueva.fecha_programada),
+            "estado": nueva.estado.value,
+        },
+    )
+    return construir_respuesta(nueva)
+
+
+def editar_cirugia(token: str, cirugia_id: UUID, datos: CirugiaEditarEntrada, db: Session) -> CirugiaRespuesta:
+    usuario_id = validar_y_renovar_sesion(token, db)
     cirujano = obtener_cirujano_por_usuario(usuario_id, db)
 
     nueva = Cirugia(
@@ -268,9 +319,9 @@ def obtener_cirugias_asistente(usuario_id: UUID, db: Session) -> list[CirugiaRes
     )
     return [construir_respuesta(c) for c in cirugias]
 
-def cambiar_estado_cirugia(usuario_id: UUID, cirugia_id: UUID, nuevo_estado: EstadoCirugia, db: Session) -> CirugiaRespuesta:
+def cambiar_estado_cirugia(token: str, cirugia_id: UUID, nuevo_estado: EstadoCirugia, db: Session) -> CirugiaRespuesta:
+    usuario_id = validar_y_renovar_sesion(token, db)
     asistente = obtener_asistente_por_usuario(usuario_id, db)
-
     cirugia = (
         db.query(Cirugia)
         .join(CirugiaAsistente, CirugiaAsistente.cirugia_id == Cirugia.id)

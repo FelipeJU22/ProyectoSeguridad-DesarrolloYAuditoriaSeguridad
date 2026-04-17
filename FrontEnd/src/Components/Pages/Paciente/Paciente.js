@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
+import { useNavigate } from 'react-router-dom';
 import './Paciente.css';
 
 function Paciente() {
@@ -11,13 +12,15 @@ function Paciente() {
   const [modalEditar, setModalEditar] = useState(false);
   const [nuevaFecha, setNuevaFecha] = useState('');
   const fileInputRef = useRef(null);
+  const navigate = useNavigate();
+  
 
   const [archivoSeleccionado, setArchivoSeleccionado] = useState(null);
   const [modalTipoDoc, setModalTipoDoc] = useState(false);
   const [tipoDocumento, setTipoDocumento] = useState('otro');
 
-  // Leer el usuario del localStorage (del login)
-  const usuarioActual = JSON.parse(localStorage.getItem('usuario') || '{}');
+  // Leer el usuario del sessionStorage (del login)
+  const usuarioActual = JSON.parse(sessionStorage.getItem('usuario') || '{}');
   const pacienteId = usuarioActual.id || 1;
   const iniciales = usuarioActual.nombre
     ? usuarioActual.nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
@@ -72,17 +75,27 @@ useEffect(() => {
 
   const handleSolicitarCancelacion = async () => {
     if (selectedIds.length === 0) return;
+    const token = sessionStorage.getItem('token');
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/v1/cirugias/cancelar?usuario_id=${pacienteId}`,
+        `http://127.0.0.1:8000/api/v1/cirugias/cancelar`,
         {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
           body: JSON.stringify({ cirugia_ids: selectedIds }),
         }
       );
 
+      if (response.status === 401) {
+        alert('Sesión expirada. Por favor iniciá sesión nuevamente.');
+        sessionStorage.clear();
+        navigate('/');
+        return;
+      }
       if (!response.ok) {
         const data = await response.json();
         alert(data.detail || 'Error al cancelar cirugías');
@@ -93,9 +106,12 @@ useEffect(() => {
       alert(`${result.total} cirugía(s) cancelada(s).`);
       setSelectedIds([]);
 
-      const updated = await fetch(`http://127.0.0.1:8000/api/v1/cirugias/paciente/${pacienteId}`);
+      const updated = await fetch(
+        `http://127.0.0.1:8000/api/v1/cirugias/paciente`,
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
       setCirugias(await updated.json());
-
+      window.location.reload();
     } catch (err) {
       console.error('Error:', err);
       alert('No se pudo conectar con el servidor.');
@@ -111,17 +127,27 @@ useEffect(() => {
 
   const handleConfirmarEditar = async () => {
     if (!nuevaFecha) return;
+    const token = sessionStorage.getItem('token');
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/v1/cirugias/${selectedIds[0]}/fecha?usuario_id=${pacienteId}`,
+        `http://127.0.0.1:8000/api/v1/cirugias/${selectedIds[0]}/fecha`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
           body: JSON.stringify({ fecha_nueva: `${nuevaFecha}T00:00:00` }),
         }
       );
 
+      if (response.status === 401) {
+        alert('Sesión expirada. Por favor iniciá sesión nuevamente.');
+        sessionStorage.clear();
+        navigate('/');
+        return;
+      }
       if (!response.ok) {
         const data = await response.json();
         alert(data.detail || 'Error al cambiar la fecha');
@@ -129,9 +155,7 @@ useEffect(() => {
       }
 
       const cirugiaActualizada = await response.json();
-      setCirugias(prev =>
-        prev.map(c => c.id === selectedIds[0] ? cirugiaActualizada : c)
-      );
+      setCirugias(prev => prev.map(c => c.id === selectedIds[0] ? cirugiaActualizada : c));
       setModalEditar(false);
       setSelectedIds([]);
 
@@ -159,18 +183,25 @@ useEffect(() => {
 
   const handleConfirmarSubida = async () => {
     if (!archivoSeleccionado) return;
+    const token = sessionStorage.getItem('token');
 
     try {
       const formData = new FormData();
-      formData.append('usuario_id', pacienteId);
       formData.append('tipo_documento', tipoDocumento);
       formData.append('archivo', archivoSeleccionado);
 
       const response = await fetch('http://127.0.0.1:8000/api/v1/documentos/subir', {
         method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
         body: formData,
       });
 
+      if (response.status === 401) {
+        alert('Sesión expirada. Por favor iniciá sesión nuevamente.');
+        sessionStorage.clear();
+        navigate('/');
+        return;
+      }
       if (!response.ok) {
         const data = await response.json();
         alert(data.detail || 'Error al subir documento');
@@ -197,13 +228,23 @@ useEffect(() => {
 
   const handleEliminarDocumento = async (doc) => {
     if (!window.confirm(`¿Eliminar "${doc.nombre_archivo}"?`)) return;
+    const token = sessionStorage.getItem('token');
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/v1/documentos/${doc.id}?usuario_id=${pacienteId}`,
-        { method: 'DELETE' }
+        `http://127.0.0.1:8000/api/v1/documentos/${doc.id}`,
+        {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` },
+        }
       );
 
+      if (response.status === 401) {
+        alert('Sesión expirada. Por favor iniciá sesión nuevamente.');
+        sessionStorage.clear();
+        navigate('/');
+        return;
+      }
       if (!response.ok) {
         const data = await response.json();
         alert(data.detail || 'Error al eliminar');
@@ -243,7 +284,7 @@ useEffect(() => {
             className="btn-logout"
             onClick={() => {
               console.log('[BACKEND → POST /auth/logout]', { pacienteId, timestamp: new Date().toISOString() });
-              localStorage.removeItem('usuario');
+              sessionStorage.removeItem('usuario');
               window.location.href = '/';
             }}
           >

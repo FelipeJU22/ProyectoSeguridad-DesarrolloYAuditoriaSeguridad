@@ -9,7 +9,7 @@ const ROL_RUTAS = {
 };
 
 function ProtectedRoute({ children, rolPermitido }) {
-  const usuarioRaw = localStorage.getItem('usuario');
+  const usuarioRaw = sessionStorage.getItem('usuario');
 
   // 1. Si no hay sesión → redirige al login
   if (!usuarioRaw) {

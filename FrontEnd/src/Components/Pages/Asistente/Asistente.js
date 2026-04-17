@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
+import { useNavigate } from 'react-router-dom';
 import './Asistente.css';
 
 const ESTADOS = ['programada', 'en_progreso', 'completada', 'cancelada', 'pospuesta'];
@@ -8,8 +9,9 @@ const ESTADOS = ['programada', 'en_progreso', 'completada', 'cancelada', 'pospue
 function Asistente() {
   const [cirugias, setCirugias] = useState([]);
   const [tabActiva, setTabActiva] = useState('citas');
+  const navigate = useNavigate();
 
-  const usuarioActual = JSON.parse(localStorage.getItem('usuario') || '{}');
+  const usuarioActual = JSON.parse(sessionStorage.getItem('usuario') || '{}');
   const asistenteId   = usuarioActual.id || 5;
   const iniciales     = usuarioActual.nombre
     ? usuarioActual.nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
@@ -42,16 +44,27 @@ function Asistente() {
   // ─── CAMBIAR ESTADO ───────────────────────────────────────────────────────
 
   const handleChangeEstado = async (cirugiaId, nuevoEstado) => {
+    const token = sessionStorage.getItem('token');
+
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/v1/cirugias/${cirugiaId}/estado?usuario_id=${asistenteId}`,
+        `http://127.0.0.1:8000/api/v1/cirugias/${cirugiaId}/estado`,
         {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
           body: JSON.stringify({ estado: nuevoEstado }),
         }
       );
 
+      if (response.status === 401) {
+        alert('Sesión expirada. Por favor iniciá sesión nuevamente.');
+        sessionStorage.clear();
+        navigate('/');
+        return;
+      }
       if (!response.ok) {
         const data = await response.json();
         alert(data.detail || 'Error al cambiar estado');
@@ -95,7 +108,7 @@ function Asistente() {
             className="btn-logout"
             onClick={() => {
               console.log('[BACKEND → POST /auth/logout]', { asistenteId, timestamp: new Date().toISOString() });
-              localStorage.removeItem('usuario');
+              sessionStorage.removeItem('usuario');
               window.location.href = '/';
             }}
           >

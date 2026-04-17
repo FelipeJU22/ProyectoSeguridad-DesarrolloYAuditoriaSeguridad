@@ -47,7 +47,16 @@ function TwoFactorAuthentication() {
         return;
       }
 
-      localStorage.setItem('usuario', JSON.stringify(usuario));
+      // Guardar token separado, datos del usuario sin el token
+      sessionStorage.setItem('token', usuario.access_token);
+      sessionStorage.setItem('usuario', JSON.stringify({
+        id: usuario.id,
+        nombre: usuario.nombre,
+        apellido: usuario.apellido,
+        correo: usuario.correo,
+        telefono: usuario.telefono,
+        rol: usuario.rol,
+      }));
       localStorage.removeItem('tempUser');
       localStorage.removeItem('2fa_challenge');
       navigate(ruta);
