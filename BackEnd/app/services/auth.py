@@ -125,7 +125,7 @@ def login_usuario(correo: str, contrasena: str, ip: str | None, db: Session) -> 
     resend.api_key   = os.getenv("RESEND_API_KEY")
     resend_correo    = os.getenv("RESEND_API_EMAIL")
 
-    r = resend.Emails.send({
+    resend.Emails.send({
         "from": "onboarding@resend.dev",
         "to": resend_correo,
         "subject": "Codigo de verificacion Hospital TEC",
