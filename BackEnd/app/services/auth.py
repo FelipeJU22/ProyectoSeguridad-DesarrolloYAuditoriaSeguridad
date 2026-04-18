@@ -114,26 +114,30 @@ def login_usuario(correo: str, contrasena: str, ip: str | None, db: Session) -> 
     registrar_token(
         correo=correo,
         challenge_id=challenge_id,
-        token_hash=hash_token("token12345"),
+        token_hash=hash_token(token_2fa),
         db=db
     )
+
+    # El codigo original se enviaba al correo del usuario,
+    # pero para pruebas se envia a un correo fijo configurado en variables de entorno
+    # Ya que los correos de la base de datos son fictios y no se pueden usar para enviar emails reales
 
     resend.api_key   = os.getenv("RESEND_API_KEY")
     resend_correo    = os.getenv("RESEND_API_EMAIL")
 
-    #r = resend.Emails.send({
-    #    "from": "onboarding@resend.dev",
-    #    "to": resend_correo,
-    #    "subject": "Codigo de verificacion Hospital TEC",
-    #    "html": f"""
-    #        <div style="font-family: Arial, sans-serif;">
-    #            <h2>Verificación de acceso</h2>
-    #            <p>Tu código de verificación es:</p>
-    #            <h1 style="letter-spacing: 4px;">{token_2fa}</h1>
-    #            <p>Este código expira en 10 minutos.</p>
-    #        </div>
-    #        """
-    #})
+    r = resend.Emails.send({
+        "from": "onboarding@resend.dev",
+        "to": resend_correo,
+        "subject": "Codigo de verificacion Hospital TEC",
+        "html": f"""
+            <div style="font-family: Arial, sans-serif;">
+                <h2>Verificación de acceso</h2>
+                <p>Tu código de verificación es:</p>
+                <h1 style="letter-spacing: 4px;">{token_2fa}</h1>
+                <p>Este código expira en 10 minutos.</p>
+            </div>
+            """
+    })
 
     return TokenRespuesta(requires2FA=True, challengeId=challenge_id)
 
