@@ -1,22 +1,9 @@
 Para ejecutar el docker, desde carpeta principal.
 docker compose up --build
 
-Revisar codigo HARDCODIADO, usado solo para pruebas
-#En docker-compose.yml
-    environment:
-      POSTGRES_DB: surgery_db
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
-    ports:
-
-#En database_init.py, EN TEORIA EL SISTEMA FUNCIONA SIN ESTO YA QUE EL DOCKER LO HACE SOLO.
-
-# Database configuration
-dbName = "surgery_db"
-dbUser = "root"
-dbPassword = "root"
-dbHost = "db"
-dbPort = "5432"
+AGREGAR EN .ENV
+RESEND_API_KEY="re_Bh8nswc5_JUiuBTPQ5W5Tqw6NG8TkXDkk"
+RESEND_API_EMAIL= "TU CORREO ENTRE ESTAS COMILLAS"
 
 COPIA DEL DOCKER-COMPOSE.YML DEL PROFE
 # Workshop: tres servicios en una red compartida
@@ -113,3 +100,4 @@ services:
 
 volumes:
   mysql_data:
+

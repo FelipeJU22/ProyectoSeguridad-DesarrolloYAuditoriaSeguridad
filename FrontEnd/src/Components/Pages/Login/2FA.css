@@ -1,0 +1,115 @@
+body {
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+  min-height: 100vh;
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.login-card {
+  width: 380px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  padding: 32px 30px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+  color: #f3f5f7;
+}
+
+.login-card h1 {
+  margin: 0 0 8px;
+  font-size: 32px;
+}
+
+.login-card p {
+  margin: 0 0 26px;
+  color: #cfd8dc;
+}
+
+.input-group {
+  position: relative;
+  margin-bottom: 22px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 14px 46px 14px 20px;
+  border-radius: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.input-group input:focus {
+  border-color: #6bd1ff;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #cbd6df;
+}
+
+.input-group .toggle-pass {
+  position: absolute;
+  right: 16px;
+  top: 66%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #aebbc1;
+  user-select: none;
+}
+
+.error-message {
+  background: rgba(255, 0, 0, 0.15);
+  border: 1px solid rgba(255, 0, 0, 0.25);
+  color: #ffdddd;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.submit-btn {
+  width: 100%;
+  border: none;
+  border-radius: 40px;
+  padding: 14px 20px;
+  background: #ffffff;
+  color: #102a43;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+}
+
+.register {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #cfd8dc;
+}
+
+.register a {
+  color: #6bd1ff;
+  text-decoration: none;
+}
+
+.register a:hover {
+  text-decoration: underline;
+}

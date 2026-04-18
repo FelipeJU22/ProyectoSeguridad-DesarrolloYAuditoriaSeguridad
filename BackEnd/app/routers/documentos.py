@@ -6,6 +6,10 @@ from app.core.database import get_db
 from app.models.documento import TipoDocumento
 from app.schemas.documento import DocumentoRespuesta
 from app.services.documentos import obtener_documentos_paciente, subir_documento, obtener_ruta_documento, eliminar_documento
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Security
+
+bearer_scheme = HTTPBearer()
 
 router = APIRouter()
 
@@ -15,12 +19,12 @@ def get_documentos_paciente(usuario_id: UUID, db: Session = Depends(get_db)):
 
 @router.post("/documentos/subir", response_model=DocumentoRespuesta)
 def post_subir_documento(
-    usuario_id: UUID = Form(...),
     tipo_documento: TipoDocumento = Form(...),
     archivo: UploadFile = File(...),
+    credentials: HTTPAuthorizationCredentials = Security(bearer_scheme),
     db: Session = Depends(get_db)
 ):
-    return subir_documento(usuario_id, tipo_documento, archivo, db)
+    return subir_documento(credentials.credentials, tipo_documento, archivo, db)
 
 @router.get("/documentos/{documento_id}/ver")
 def get_ver_documento(documento_id: UUID, usuario_id: UUID, db: Session = Depends(get_db)):
@@ -32,5 +36,5 @@ def get_ver_documento(documento_id: UUID, usuario_id: UUID, db: Session = Depend
     )
 
 @router.delete("/documentos/{documento_id}")
-def delete_documento(documento_id: UUID, usuario_id: UUID, db: Session = Depends(get_db)):
-    return eliminar_documento(documento_id, usuario_id, db)
+def delete_documento(documento_id: UUID, credentials: HTTPAuthorizationCredentials = Security(bearer_scheme), db: Session = Depends(get_db)):
+    return eliminar_documento(credentials.credentials, documento_id, db)

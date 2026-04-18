@@ -46,3 +46,14 @@ CREATE TABLE intentos_login (
     exito           BOOLEAN NOT NULL DEFAULT FALSE,
     intentado_en    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Tokens
+CREATE TABLE two_factor_challenges (
+    id              BIGSERIAL PRIMARY KEY,
+    correo          VARCHAR(255) NOT NULL,
+    challenge_id    VARCHAR(128) NOT NULL,
+    token_hash      VARCHAR(128) NOT NULL,
+    created_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at      TIMESTAMP WITH TIME ZONE NOT NULL,
+    used            BOOLEAN NOT NULL DEFAULT FALSE
+);

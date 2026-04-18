@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     APP_NAME: str
@@ -7,7 +7,10 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALLOWED_ORIGINS: list[str] = ["*"]
 
-    class Config:
-        env_file = ".env"
+    # JWT / sesiones
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 2
+
+    model_config = SettingsConfigDict(extra="ignore")
 
 settings = Settings()

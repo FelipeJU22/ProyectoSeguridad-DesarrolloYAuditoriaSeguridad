@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import usuarios, auth, cirugias, documentos, listas
+from app.routers import usuarios, auth, cirugias, documentos, listas, cookie
 from app.core.config import settings
 
 app = FastAPI(
@@ -45,6 +45,12 @@ app.include_router(
     listas.router,
     prefix="/api/v1",
     tags=["Listas"]
+)
+
+app.include_router(
+    cookie.router,
+    prefix="/api/v1",
+    tags=["Cookies"]
 )
 
 @app.get("/", tags=["Root"])

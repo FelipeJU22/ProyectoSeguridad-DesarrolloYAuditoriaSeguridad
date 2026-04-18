@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
+import { useNavigate } from 'react-router-dom';
 import './Cirujano.css';
 
 const EMPTY_FORM = {
@@ -23,8 +24,9 @@ function Cirujano() {
   const [listaPacientes, setListaPacientes]         = useState([]);
   const [listaAnestesiologos, setListaAnestesiologos] = useState([]);
   const [listaAsistentes, setListaAsistentes]         = useState([]);
+  const navigate = useNavigate();
 
-  const usuarioActual = JSON.parse(localStorage.getItem('usuario') || '{}');
+  const usuarioActual = JSON.parse(sessionStorage.getItem('usuario') || '{}');
   const cirujanoId    = usuarioActual.id || 3;
   const iniciales     = usuarioActual.nombre
     ? usuarioActual.nombre.split(' ').map(n => n[0]).join('').slice(1, 3).toUpperCase()
@@ -86,12 +88,17 @@ function Cirujano() {
   const handleConfirmarCrear = async () => {
     if (!form.paciente_id || !form.tipo_cirugia || !form.fecha_programada || !form.anestesiologo_id) return;
 
+    const token = sessionStorage.getItem('token');
+
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/v1/cirugias?usuario_id=${cirujanoId}`,
+        `http://127.0.0.1:8000/api/v1/cirugias`,   // ya no va usuario_id acá
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,     // token en el header
+          },
           body: JSON.stringify({
             paciente_id:           form.paciente_id,
             tipo_cirugia:          form.tipo_cirugia,
@@ -103,6 +110,13 @@ function Cirujano() {
           }),
         }
       );
+
+      if (response.status === 401) {
+        alert('Sesión expirada. Por favor iniciá sesión nuevamente.');
+        sessionStorage.clear();
+        navigate('/');   // ajustá la ruta a la tuya
+        return;
+      }
 
       if (!response.ok) {
         const data = await response.json();
@@ -138,13 +152,17 @@ function Cirujano() {
 
   const handleConfirmarEditar = async () => {
     if (!form.tipo_cirugia || !form.fecha_programada || !form.anestesiologo_id) return;
+    const token = sessionStorage.getItem('token');
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/v1/cirugias/${editTarget.id}?usuario_id=${cirujanoId}`,
+        `http://127.0.0.1:8000/api/v1/cirugias/${editTarget.id}`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
           body: JSON.stringify({
             tipo_cirugia:          form.tipo_cirugia,
             fecha_programada:      `${form.fecha_programada}T00:00:00`,
@@ -156,6 +174,12 @@ function Cirujano() {
         }
       );
 
+      if (response.status === 401) {
+        alert('Sesión expirada. Por favor iniciá sesión nuevamente.');
+        sessionStorage.clear();
+        navigate('/');
+        return;
+      }
       if (!response.ok) {
         const data = await response.json();
         alert(data.detail || 'Error al editar cirugía');
@@ -199,7 +223,7 @@ function Cirujano() {
             className="btn-logout"
             onClick={() => {
               console.log('[BACKEND → POST /auth/logout]', { cirujanoId, timestamp: new Date().toISOString() });
-              localStorage.removeItem('usuario');
+              sessionStorage.removeItem('usuario');
               window.location.href = '/';
             }}
           >
