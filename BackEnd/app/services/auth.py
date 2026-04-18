@@ -5,7 +5,7 @@ import secrets
 import hashlib
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
-from fastapi import HTTPException, Request, status
+from fastapi import HTTPException, status
 from app.models.tokens import TwoFactorChallenge
 from app.models.usuario import Usuario
 from app.models.intento_login import IntentoLogin
