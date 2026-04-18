@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, Integer, String, Boolean, TIMESTAMP
+from sqlalchemy import Column, BigInteger, String, Boolean, TIMESTAMP
 from sqlalchemy.sql import func
 from app.core.database import Base
 
