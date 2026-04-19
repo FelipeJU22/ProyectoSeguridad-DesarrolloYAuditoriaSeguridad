@@ -1,65 +1,167 @@
-# Proyecto Seguridad: Desarrollo y Auditoria de Seguridad
-Proyecto Semestral del curso de Seguridad de la Información
+# 🏥 HospiTEC — Sistema de Gestión de Cirugías
 
-#  Guía y Convenciones
+Aplicación web desarrollada para el curso **CE-1115 Seguridad de la Información** en el Instituto Tecnológico de Costa Rica.
 
-Este archivo contiene las convenciones y estructura de trabajo que debe seguir el equipo de desarrollo. Asegúrate de leer y aplicar estas reglas en cada contribución.
-
----
-
-## Estructura del Proyecto
-
-"
- src/                # Código fuente principal  
- tests/              # Pruebas unitarias y de integración  
- docs/               # Documentación técnica  
- build/              # Archivos relacionados al sistema de construcción  
- README.md           # Guía principal del proyecto
-"
+El sistema permite la gestión de cirugías en un entorno hospitalario, incluyendo agendamiento, manejo de pacientes, documentos médicos y control de acceso por roles.
 
 ---
 
-##  Convención de Commits
+## 🚀 Tecnologías utilizadas
 
-Usamos Conventional Commits (https://www.conventionalcommits.org/) para estandarizar nuestros mensajes:
-
-| Tipo       | Propósito                            | Ejemplo de commit                                    |
-|------------|---------------------------------------|------------------------------------------------------|
-| "feat"     | Nueva característica                  | "feat: add artist recommendation engine"            |
-| "fix"      | Corrección de errores                 | "fix: resolve user login timeout issue"             |
-| "perf"     | Mejora de rendimiento                 | "perf: optimize database queries"                   |
-| "build"    | Cambios en el sistema de build        | "build: update webpack configuration"               |
-| "ci"       | Cambios en integración continua       | "ci: add automated UI testing"                      |
-| "docs"     | Cambios en documentación              | "docs: update API documentation"                    |
-| "refactor" | Refactorización de código (sin bugfix)| "refactor: rename user variables for clarity"       |
-| "style"    | Cambios de formato (sin lógica)       | "style: fix indentation in controllers"             |
-| "test"     | Adición o refactorización de tests    | "test: add unit tests for playlist service"         |
-
- **Formato del mensaje**:  
-"git commit -m \"tipo: descripción breve del cambio\""
+- **Frontend:** React (Node.js)
+- **Backend:** FastAPI (Python)
+- **Base de datos:** PostgreSQL
+- **Infraestructura:** Docker + Docker Compose
 
 ---
 
-##  Ejemplo de Pull Request
+## ⚙️ Funcionalidades principales
 
-**Título del PR:**  
-"feat: Implement artist subscription notifications"
+- Gestión de usuarios con roles:
+  - Paciente
+  - Cirujano
+  - Anestesiólogo
+  - Asistente
 
-**Descripción del PR:**  
-"Este PR implementa las notificaciones en tiempo real para los usuarios cuando sus artistas favoritos publican nuevo contenido o anuncian eventos."
+- Autenticación segura:
+  - Login con contraseña
+  - Autenticación en dos factores (2FA por correo)
 
-**Checklist:**
-- [x] El código compila y pasa las pruebas  
-- [x] Se sigue la convención de commits  
-- [x] Documentación actualizada si aplica  
-- [x] Pruebas incluidas o actualizadas
+- Gestión de cirugías:
+  - Crear, visualizar y administrar citas quirúrgicas
+
+- Manejo de documentos:
+  - Subida de PDFs
+  - Aislamiento por paciente
+
+- Auditoría:
+  - Registro de acciones (login, documentos, cirugías, etc.)
 
 ---
 
-##  Reglas de Aprobación
+## 🔐 Seguridad implementada
 
--  Todo PR requiere aprobación de al menos **2 integrantes** del equipo (excepto hotfixes).  
--  No se debe hacer merge sin revisión, a menos que se trate de una emergencia validada por el equipo.  
--  Se recomienda usar "Squash and Merge" para mantener un historial limpio.
+El sistema fue diseñado siguiendo principios de seguridad y OWASP Top 10:
+
+- 🔑 Hash de contraseñas con **bcrypt**
+- 🔒 Autenticación con **JWT + 2FA**
+- 🔁 Sesión única por usuario
+- 🧾 Auditoría completa de acciones
+- 🛡 Protección contra:
+  - XSS → Content Security Policy (CSP)
+  - Clickjacking → `X-Frame-Options`
+  - CORS mal configurado → restricción de orígenes
+- 📂 Validación de archivos (solo PDF)
+- 🧠 Validación de datos en backend (Pydantic)
 
 ---
+
+## 🐳 Ejecución del proyecto
+
+### 1. Clonar el repositorio
+
+```bash
+git clone <repo-url>
+cd <repo>
+```
+
+### 2. Configurar variables de entorno
+
+Crear archivo `.env` en la raíz:
+
+```env
+POSTGRES_DB=surgery_db
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+
+DATABASE_URL=postgresql://postgres:postgres@db:5432/surgery_db
+
+SECRET_KEY=una_clave_secreta
+
+ALLOWED_ORIGINS=["http://localhost:3000"]
+
+RESEND_API_KEY=your_key
+RESEND_API_EMAIL=your_email
+ENABLE_2FA_EMAIL=false
+```
+
+### 3. Ejecutar con Docker
+
+```bash
+docker compose up --build
+```
+
+### 4. Acceso
+
+| Servicio   | URL                          |
+|------------|------------------------------|
+| Frontend   | http://localhost:3000        |
+| Backend    | http://localhost:8000        |
+| Docs API   | http://localhost:8000/docs   |
+
+---
+
+## 🧪 Seguridad y pruebas
+
+Se realizaron pruebas de seguridad utilizando:
+
+- **OWASP ZAP**
+
+Se identificaron y mitigaron vulnerabilidades como:
+
+- Falta de CSP
+- Configuración insegura de CORS
+- Falta de protección contra clickjacking
+
+> **Nota:** Algunas alertas pueden persistir en `localhost:3000` debido al uso del servidor de desarrollo de React.
+
+---
+
+## ⚠️ Limitaciones conocidas
+
+- El frontend en modo desarrollo no aplica headers de seguridad.
+- CSP incluye directivas permisivas (`unsafe-eval`) en desarrollo.
+- No se utiliza HTTPS en entorno local.
+- Tokens JWT se almacenan en `sessionStorage`.
+
+---
+
+## 📁 Estructura del proyecto
+
+```
+.
+├── BackEnd/
+│   ├── app/
+│   ├── routers/
+│   ├── middleware/
+│   └── ...
+├── Frontend/
+├── database/
+│   └── db_init/
+├── docker-compose.yml
+└── .env
+```
+
+---
+
+## 👥 Autores
+
+- Ricardo Borbón Mena
+- Jorge Guillén Campos
+- Felipe Jiménez Ulate
+- Carlos Rodríguez Segura
+- José María Vindas Ortiz
+
+---
+
+## 📚 Curso
+
+**CE-1115 Seguridad de la Información**  
+Instituto Tecnológico de Costa Rica  
+I Semestre 2026
+
+---
+
+## 📌 Licencia
+
+Proyecto académico — uso educativo.
