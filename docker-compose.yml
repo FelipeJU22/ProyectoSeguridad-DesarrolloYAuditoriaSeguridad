@@ -6,7 +6,7 @@ services:
     container_name: postgres_db
     restart: unless-stopped
     env_file:
-    - ./BackEnd/.env
+    - ./.env
 
     ports:
       - "5432:5432"
@@ -28,7 +28,7 @@ services:
     volumes:
       - ./BackEnd:/app
     env_file:
-      - ./BackEnd/.env
+      - ./.env
     depends_on:
       db:
         condition: service_healthy

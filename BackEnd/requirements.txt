@@ -9,3 +9,4 @@ bcrypt
 python-multipart
 python-jose[cryptography]
 resend
+starlette

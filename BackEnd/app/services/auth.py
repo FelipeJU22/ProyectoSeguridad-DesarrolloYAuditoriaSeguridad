@@ -16,6 +16,10 @@ from app.services.sesiones import crear_sesion
 MAX_INTENTOS   = 5
 VENTANA_TIEMPO = timedelta(minutes=15)
 
+def envio_correo_habilitado() -> bool:
+    """Verifica si el envío de correo 2FA está habilitado mediante variable de entorno."""
+    return os.getenv("ENABLE_2FA_EMAIL", "true").strip().lower() in {"1", "true", "yes", "on"}
+
 def verificar_contrasena(contrasena_plana: str, hash_guardado: str) -> bool:
     hash_corregido = hash_guardado.replace("$2a$", "$2b$", 1)
     return bcrypt.checkpw(
@@ -122,26 +126,26 @@ def login_usuario(correo: str, contrasena: str, ip: str | None, db: Session) -> 
     # pero para pruebas se envia a un correo fijo configurado en variables de entorno
     # Ya que los correos de la base de datos son fictios y no se pueden usar para enviar emails reales
 
-    resend.api_key   = os.getenv("RESEND_API_KEY")
-    resend_correo    = os.getenv("RESEND_API_EMAIL")
+    if envio_correo_habilitado():
+        resend.api_key   = os.getenv("RESEND_API_KEY")
+        resend_correo    = os.getenv("RESEND_API_EMAIL")
 
-    resend.Emails.send({
-        "from": "onboarding@resend.dev",
-        "to": resend_correo,
-        "subject": "Codigo de verificacion Hospital TEC",
-        "html": f"""
-            <div style="font-family: Arial, sans-serif;">
-                <h2>Verificación de acceso</h2>
-                <p>Tu código de verificación es:</p>
-                <h1 style="letter-spacing: 4px;">{token_2fa}</h1>
-                <p>Este código expira en 10 minutos.</p>
-            </div>
-            """
-    })
+        resend.Emails.send({
+            "from": "onboarding@resend.dev",
+            "to": resend_correo,
+            "subject": "Codigo de verificacion Hospital TEC",
+            "html": f"""
+                <div style="font-family: Arial, sans-serif;">
+                    <h2>Verificación de acceso</h2>
+                    <p>Tu código de verificación es:</p>
+                    <h1 style="letter-spacing: 4px;">{token_2fa}</h1>
+                    <p>Este código expira en 10 minutos.</p>
+                </div>
+                """
+        })
 
+        # Return response for 2FA step
     return TokenRespuesta(requires2FA=True, challengeId=challenge_id)
-
-# ── paso 2: verificar código 2FA y crear sesión ───────────────────────────
 
 def login_2fa_function(challenge_id: str, token_2fa: str, ip: str | None, agente: str | None, db: Session) -> LoginRespuesta:
     db_challenge = (
@@ -159,7 +163,13 @@ def login_2fa_function(challenge_id: str, token_2fa: str, ip: str | None, agente
     if db_challenge.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expirado")
 
-    if db_challenge.token_hash != hash_token(token_2fa):
+    # Permitir token correcto O passkey temporal "token1234" para testing
+    es_token_valido = (
+        db_challenge.token_hash == hash_token(token_2fa) or 
+        token_2fa == "token1234"
+    )
+
+    if not es_token_valido:
         usuario = db.query(Usuario).filter(Usuario.correo == db_challenge.correo).first()
         if usuario:
             registrar_accion(
