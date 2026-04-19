@@ -144,6 +144,9 @@ def login_usuario(correo: str, contrasena: str, ip: str | None, db: Session) -> 
                 """
         })
 
+        # Return response for 2FA step
+    return TokenRespuesta(requires2FA=True, challengeId=challenge_id)
+
 def login_2fa_function(challenge_id: str, token_2fa: str, ip: str | None, agente: str | None, db: Session) -> LoginRespuesta:
     db_challenge = (
         db.query(TwoFactorChallenge)
