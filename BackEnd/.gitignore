@@ -1,0 +1,12 @@
+# Ignorar la carpeta de entorno virtual.
+venv
+
+# Ignorar archivos de configuración de entorno.
+.env
+
+# Archivos temporales de Python.
+__pycache__/
+*.pyc
+
+# Ignorar documentos subidos
+documentos/
