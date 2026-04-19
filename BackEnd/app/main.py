@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import usuarios, auth, cirugias, documentos, listas, cookie
+from app.middleware.security import SecurityHeadersMiddleware
 from app.core.config import settings
 
 app = FastAPI(
@@ -16,6 +17,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 app.include_router(
     usuarios.router,
